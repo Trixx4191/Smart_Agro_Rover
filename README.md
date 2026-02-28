@@ -8,7 +8,7 @@ A low-cost autonomous rover for soil monitoring, crop health analysis, and field
 
 ```
 rover/
-├── venv/                        ← Python virtual environment
+├── venv/                       
 ├── arduino/
 │   ├── rover_firmware/
 │   │   └── rover_firmware.ino   ← Flash to Arduino Nano
