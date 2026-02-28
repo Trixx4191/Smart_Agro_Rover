@@ -97,4 +97,4 @@ Measure them by walking the corners with a phone GPS app.
 
 ## Hardware BOM
 
-See `FarmRover_BOM.xlsx` for the full 27-item bill of materials (~$170 total).
+See `FarmRover_BOM.xlsx` for the full 27-item bill of materials .
