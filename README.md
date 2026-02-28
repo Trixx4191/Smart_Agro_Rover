@@ -1,6 +1,6 @@
 # 🌱 Autonomous Farm Rover
 
-A low-cost autonomous rover for soil monitoring, crop health analysis, and field data collection. Built on Raspberry Pi 4 + Arduino Nano. Total hardware cost: **< $200 USD**.
+A low-cost autonomous rover for soil monitoring, crop health analysis, and field data collection. Built on Raspberry Pi 4 + Arduino Nano. 
 
 ---
 
