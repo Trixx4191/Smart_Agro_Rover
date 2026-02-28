@@ -16,7 +16,7 @@ IMAGE_DIR   = os.path.join(DATA_DIR, "images")
 DB_PATH     = os.path.join(DB_DIR,   "rover.db")
 
 #  Serial (Arduino ↔ Pi) 
-SERIAL_PORT     = "/dev/ttyUSB0"   # change to /dev/ttyACM0 if needed
+SERIAL_PORT     = "/dev/ttyUSB0"   # might change to /dev/ttyACM0 if needed
 SERIAL_BAUD     = 115200
 SERIAL_TIMEOUT  = 2               # seconds
 
