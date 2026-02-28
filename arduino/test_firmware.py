@@ -1,6 +1,6 @@
 """
 test_firmware.py
-────────────────
+─
 Tests the Arduino command/response protocol against the simulator.
 Every test maps directly to real firmware behavior — if it passes
 here, it'll behave identically on real hardware.
@@ -41,7 +41,7 @@ print("\n" + "="*55)
 print("  FARM ROVER — Arduino Firmware Test Suite")
 print("="*55)
 
-# ── 1. Startup & malformed input ─────────────────────────────
+#   Startup & malformed input 
 print("\n[1] Input Validation")
 reset_state()
 r = handle_command("")
@@ -57,7 +57,7 @@ r = json.loads(handle_command('{"cmd":"launch_missiles"}'))
 test("Unknown command returns error", r.get("error") == "unknown_cmd")
 
 
-# ── 2. Stop command ──────────────────────────────────────────
+#  2. Stop command 
 print("\n[2] Stop Command")
 reset_state()
 state["dir"] = "forward"
@@ -69,7 +69,7 @@ test("Stop sets dir to stop", state["dir"] == "stop")
 test("Stop sets speed to 0", state["speed"] == 0)
 
 
-# ── 3. Move commands ─────────────────────────────────────────
+#  Move commands ─
 print("\n[3] Move Commands")
 reset_state()
 
@@ -95,7 +95,7 @@ r = run({"cmd": "move", "dir": "sideways", "speed": 100})
 test("Unknown direction returns error", r.get("error") == "unknown_dir")
 
 
-# ── 4. Emergency Stop ────────────────────────────────────────
+#   Emergency Stop 
 print("\n[4] Emergency Stop")
 reset_state()
 state["dir"] = "forward"
@@ -117,7 +117,7 @@ r = run({"cmd": "stop"})
 test("Stop also blocked during eStop", r.get("error") == "estop_active")
 
 
-# ── 5. Reset after eStop ─────────────────────────────────────
+#   Reset after eStop 
 print("\n[5] Reset After Emergency Stop")
 # state still has estop=True from above
 
@@ -131,7 +131,7 @@ r = run({"cmd": "move", "dir": "forward", "speed": 100})
 test("Move works after reset", r.get("ack") == "move")
 
 
-# ── 6. Sample command ────────────────────────────────────────
+#  Sample command 
 print("\n[6] Sample Command")
 reset_state()
 
@@ -150,7 +150,7 @@ test("Sample soil_temp has 2 values", len(r["soil_temp"]) == 2)
 test("Sample enc has 4 values", len(r["enc"]) == 4)
 
 
-# ── 7. Sensor value ranges ───────────────────────────────────
+#  Sensor value ranges 
 print("\n[7] Sensor Value Ranges")
 reset_state()
 
@@ -170,7 +170,7 @@ test("Pressure > 900 hPa", r["pressure"] > 900)
 test("Humidity 0-100", 0 <= r["humidity"] <= 100)
 
 
-# ── 8. Encoder counting ──────────────────────────────────────
+#  Encoder counting 
 print("\n[8] Encoder State")
 reset_state()
 state["enc"] = [0, 0, 0, 0]
@@ -183,7 +183,7 @@ test("Enc array has 4 channels", len(r["enc"]) == 4)
 test("Enc values are integers", all(isinstance(v, int) for v in r["enc"]))
 
 
-# ── 9. Whitespace / edge case inputs ─────────────────────────
+#  Whitespace / edge case inputs 
 print("\n[9] Edge Cases")
 reset_state()
 
@@ -198,7 +198,7 @@ r = json.loads(handle_command('{"cmd":"move","dir":"forward"}'))
 test("Move with no speed defaults to 150", state["speed"] == 150)
 
 
-# ── Summary ──────────────────────────────────────────────────
+#  Summary 
 passed = sum(1 for s, _ in results if s == PASS)
 failed = sum(1 for s, _ in results if s == FAIL)
 total  = len(results)

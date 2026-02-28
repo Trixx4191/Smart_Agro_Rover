@@ -1,6 +1,6 @@
 """
 tests/test_pi.py
-─────────────────
+─
 Tests for all Raspberry Pi subsystems.
 Runs entirely in simulation — no hardware required.
 
@@ -34,9 +34,9 @@ def section(title):
     print(f"\n[{title}]")
 
 
-# ══════════════════════════════════════════════════════════════
+# 
 #  1. CONFIG
-# ══════════════════════════════════════════════════════════════
+# 
 section("1. Config")
 
 from pi.config import (
@@ -60,9 +60,9 @@ test("GREEN_LOW has 3 values",       len(GREEN_LOW) == 3)
 test("DASHBOARD_PORT is valid",      1024 < DASHBOARD_PORT < 65535)
 
 
-# ══════════════════════════════════════════════════════════════
+# 
 #  2. GPS READER
-# ══════════════════════════════════════════════════════════════
+# 
 section("2. GPS Reader")
 
 from pi.navigation.gps_reader import (
@@ -131,9 +131,9 @@ test("GPS bearing_to returns degrees", brg is not None and 0 <= brg <= 360)
 gps.stop()
 
 
-# ══════════════════════════════════════════════════════════════
+# 
 #  3. IMU READER
-# ══════════════════════════════════════════════════════════════
+# 
 section("3. IMU Reader")
 
 from pi.navigation.imu_reader import IMUReader
@@ -156,9 +156,9 @@ test("IMU sim heading changes",     h1 != h2)
 imu.stop()
 
 
-# ══════════════════════════════════════════════════════════════
+# 
 #  4. SERIAL HANDLER (simulation mode)
-# ══════════════════════════════════════════════════════════════
+# 
 section("4. Serial Handler (sim)")
 
 from pi.comms.serial_handler import SerialHandler
@@ -196,9 +196,9 @@ test("history() has entries",         len(history) > 0)
 arduino.disconnect()
 
 
-# ══════════════════════════════════════════════════════════════
+# 
 #  5. DATA LOGGER
-# ══════════════════════════════════════════════════════════════
+# 
 section("5. Data Logger")
 
 # Use a temp dir so tests don't pollute real data
@@ -260,9 +260,9 @@ test("CSV moisture_1 in data",        "65" in lines[1] or "65" in lines[2])
 shutil.rmtree(tmpdir)
 
 
-# ══════════════════════════════════════════════════════════════
+# 
 #  6. VISION
-# ══════════════════════════════════════════════════════════════
+# 
 section("6. Vision (sim + synthetic image)")
 
 tmpdir2 = tempfile.mkdtemp()
@@ -291,9 +291,9 @@ vision.stop()
 shutil.rmtree(tmpdir2)
 
 
-# ══════════════════════════════════════════════════════════════
+# 
 #  SUMMARY
-# ══════════════════════════════════════════════════════════════
+# 
 passed = sum(1 for s, _, __ in results if s == PASS)
 failed = sum(1 for s, _, __ in results if s == FAIL)
 total  = len(results)
