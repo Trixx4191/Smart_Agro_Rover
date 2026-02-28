@@ -20,7 +20,8 @@ PASS = "✅"
 FAIL = "❌"
 results = []
 
-def reset_state():
+def reset_state():git remote add origin <URL>
+git push -u origin master
     state["estop"] = False
     state["dir"] = "stop"
     state["speed"] = 0
