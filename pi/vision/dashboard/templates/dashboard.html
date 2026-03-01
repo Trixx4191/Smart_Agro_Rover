@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroRover — Field Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --soil:       #1a0f00;
+    --bark:       #2d1a0a;
+    --moss:       #1e3a1e;
+    --leaf:       #2d5a27;
+    --sprout:     #4a8c3f;
+    --lime:       #7bc67a;
+    --dew:        #a8d8a0;
+    --mist:       #e8f5e3;
+    --gold:       #c8a84b;
+    --amber:      #e8b94b;
+    --rust:       #c0392b;
+    --cream:      #faf7f0;
+    --ink:        #0d1f0d;
+    --glass:      rgba(255,255,255,0.06);
+    --glass-border: rgba(255,255,255,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--soil);
+    color: var(--mist);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background texture ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(45,90,39,0.25) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 80% 80%, rgba(30,58,30,0.3) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 60% 30%, rgba(74,140,63,0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2.5rem;
+    height: 64px;
+    background: rgba(26,15,0,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nav-logo {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--sprout), var(--lime));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .nav-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--cream);
+  }
+
+  .nav-title span { color: var(--lime); }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--dew);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    transition: opacity 0.2s, color 0.2s;
+  }
+
+  .nav-links a:hover,
+  .nav-links a.active { opacity: 1; color: var(--lime); }
+
+  .nav-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--lime);
+  }
+
+  .pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--lime);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* ── SECTIONS ── */
+  section { position: relative; z-index: 1; }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 5rem 2.5rem 3rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .hero-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--cream);
+    margin-bottom: 1rem;
+  }
+
+  .hero-text h1 em {
+    font-style: normal;
+    color: var(--lime);
+    position: relative;
+  }
+
+  .hero-text p {
+    font-size: 1rem;
+    color: var(--dew);
+    line-height: 1.7;
+    max-width: 420px;
+    opacity: 0.8;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s, border-color 0.3s;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(123,198,122,0.3);
+  }
+
+  .stat-card:nth-child(1) { animation-delay: 0.1s; }
+  .stat-card:nth-child(2) { animation-delay: 0.2s; }
+  .stat-card:nth-child(3) { animation-delay: 0.3s; }
+  .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lime);
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+  }
+
+  .stat-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1;
+  }
+
+  .stat-unit {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--dew);
+    opacity: 0.6;
+    margin-left: 4px;
+  }
+
+  .stat-trend {
+    font-size: 0.75rem;
+    margin-top: 0.4rem;
+    color: var(--lime);
+  }
+
+  .stat-trend.down { color: var(--amber); }
+  .stat-trend.alert { color: var(--rust); }
+
+  /* ── SECTION HEADING ── */
+  .section-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2.5rem 4rem;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .section-head h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--cream);
+  }
+
+  .section-head .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--lime);
+    background: rgba(123,198,122,0.1);
+    border: 1px solid rgba(123,198,122,0.2);
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  /* ── GAUGES ── */
+  .gauges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .gauge-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.8rem 1.5rem;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s;
+  }
+
+  .gauge-card:hover { transform: translateY(-3px); }
+
+  .gauge-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--sprout), var(--lime));
+    border-radius: 20px 20px 0 0;
+  }
+
+  .gauge-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .gauge-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dew);
+    opacity: 0.6;
+    margin-bottom: 0.4rem;
+  }
+
+  .gauge-reading {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1;
+  }
+
+  .gauge-unit {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--dew);
+    opacity: 0.5;
+  }
+
+  .gauge-bar {
+    margin-top: 1rem;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .gauge-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--sprout), var(--lime));
+    transition: width 1s ease;
+  }
+
+  .gauge-fill.warm { background: linear-gradient(90deg, var(--gold), var(--amber)); }
+  .gauge-fill.alert { background: linear-gradient(90deg, var(--rust), var(--amber)); }
+
+  /* ── CHARTS ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .chart-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.8rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .chart-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--lime);
+    margin-bottom: 1.2rem;
+    opacity: 0.8;
+  }
+
+  .chart-area {
+    position: relative;
+    height: 180px;
+  }
+
+  canvas { width: 100% !important; }
+
+  /* ── GPS MAP ── */
+  .map-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.8rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .map-area {
+    position: relative;
+    height: 320px;
+    background: rgba(30,58,30,0.3);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+  }
+
+  #gpsCanvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .map-legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    color: var(--dew);
+    opacity: 0.7;
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+
+  /* ── IMAGE GALLERY ── */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .gallery-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s, border-color 0.3s;
+  }
+
+  .gallery-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(123,198,122,0.3);
+  }
+
+  .gallery-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    background: rgba(45,90,39,0.3);
+  }
+
+  .gallery-img-placeholder {
+    width: 100%;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    background: linear-gradient(135deg, rgba(45,90,39,0.4), rgba(30,58,30,0.6));
+  }
+
+  .gallery-info {
+    padding: 1rem 1.2rem;
+  }
+
+  .gallery-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    color: var(--dew);
+    opacity: 0.5;
+    margin-bottom: 0.4rem;
+  }
+
+  .gallery-verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 0.5rem;
+  }
+
+  .gallery-verdict.healthy {
+    background: rgba(123,198,122,0.15);
+    color: var(--lime);
+    border: 1px solid rgba(123,198,122,0.2);
+  }
+
+  .gallery-verdict.stressed {
+    background: rgba(192,57,43,0.15);
+    color: #e74c3c;
+    border: 1px solid rgba(192,57,43,0.2);
+  }
+
+  .gallery-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--dew);
+    opacity: 0.6;
+  }
+
+  /* ── CROP KNOWLEDGE GALLERY ── */
+  .knowledge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .crop-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  .crop-card:hover { transform: translateY(-8px) scale(1.01); }
+
+  .crop-hero {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .crop-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(26,15,0,0.8), transparent);
+  }
+
+  .crop-body { padding: 1.5rem; }
+
+  .crop-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--cream);
+    margin-bottom: 0.3rem;
+  }
+
+  .crop-latin {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--lime);
+    opacity: 0.7;
+    margin-bottom: 0.8rem;
+    font-style: italic;
+  }
+
+  .crop-desc {
+    font-size: 0.85rem;
+    color: var(--dew);
+    line-height: 1.65;
+    opacity: 0.8;
+    margin-bottom: 1rem;
+  }
+
+  .crop-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .crop-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(123,198,122,0.1);
+    border: 1px solid rgba(123,198,122,0.2);
+    color: var(--lime);
+    letter-spacing: 0.05em;
+  }
+
+  .crop-health-bar {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.72rem;
+    color: var(--dew);
+    opacity: 0.6;
+  }
+
+  .health-track {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .health-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--sprout), var(--lime));
+  }
+
+  /* ── DATA TABLE ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+
+  .data-table th {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--lime);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--glass-border);
+    opacity: 0.8;
+  }
+
+  .data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--dew);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+  }
+
+  .data-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  .badge.ok { background: rgba(123,198,122,0.15); color: var(--lime); }
+  .badge.warn { background: rgba(232,185,75,0.15); color: var(--amber); }
+  .badge.alert { background: rgba(192,57,43,0.15); color: #e74c3c; }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--glass-border);
+    padding: 2rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--dew);
+    opacity: 0.4;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+    margin: 1rem 0 3rem;
+  }
+
+  /* ── REFRESH BAR ── */
+  .refresh-bar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--sprout), var(--lime));
+    z-index: 99;
+    animation: refreshBar 10s linear infinite;
+  }
+
+  @keyframes refreshBar {
+    from { width: 0; }
+    to   { width: 100%; }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Refresh progress bar -->
+<div class="refresh-bar"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">🌿</div>
+    <div class="nav-title">Agro<span>Rover</span></div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#gauges" class="active">Sensors</a></li>
+    <li><a href="#charts">Trends</a></li>
+    <li><a href="#map">Map</a></li>
+    <li><a href="#gallery">Images</a></li>
+    <li><a href="#knowledge">Crop Intel</a></li>
+  </ul>
+  <div class="nav-status">
+    <div class="pulse"></div>
+    <span id="liveTime">--:--:--</span>
+    &nbsp;·&nbsp; MISSION ACTIVE
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-text">
+    <h1>Field <em>Intelligence</em><br>at a Glance</h1>
+    <p>Real-time soil, environment, and crop health data collected autonomously across your farm plot. Every reading GPS-tagged. Every anomaly flagged.</p>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-card">
+      <div class="stat-label">Soil Moisture</div>
+      <div class="stat-value" id="hMoisture1">—<span class="stat-unit">%</span></div>
+      <div class="stat-trend" id="hMoistureTrend">Sensor 1</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Air Temp</div>
+      <div class="stat-value" id="hAirTemp">—<span class="stat-unit">°C</span></div>
+      <div class="stat-trend">Ambient</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Humidity</div>
+      <div class="stat-value" id="hHumidity">—<span class="stat-unit">%</span></div>
+      <div class="stat-trend">Relative</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Stress Events</div>
+      <div class="stat-value" id="hStress">—</div>
+      <div class="stat-trend" id="hStressTrend">This session</div>
+    </div>
+  </div>
+</section>
+
+<!-- GAUGES -->
+<section id="gauges" class="section-wrap">
+  <div class="section-head">
+    <h2>Live Sensor Readings</h2>
+    <span class="tag">Real-time</span>
+  </div>
+  <div class="gauges-grid">
+    <div class="gauge-card">
+      <div class="gauge-icon">💧</div>
+      <div class="gauge-name">Soil Moisture 1</div>
+      <div class="gauge-reading" id="gMoisture1">—<span class="gauge-unit">%</span></div>
+      <div class="gauge-bar"><div class="gauge-fill" id="gMoisture1Bar" style="width:0%"></div></div>
+    </div>
+    <div class="gauge-card">
+      <div class="gauge-icon">💧</div>
+      <div class="gauge-name">Soil Moisture 2</div>
+      <div class="gauge-reading" id="gMoisture2">—<span class="gauge-unit">%</span></div>
+      <div class="gauge-bar"><div class="gauge-fill" id="gMoisture2Bar" style="width:0%"></div></div>
+    </div>
+    <div class="gauge-card">
+      <div class="gauge-icon">🌡️</div>
+      <div class="gauge-name">Soil Temp 1</div>
+      <div class="gauge-reading" id="gSoilTemp1">—<span class="gauge-unit">°C</span></div>
+      <div class="gauge-bar"><div class="gauge-fill warm" id="gSoilTemp1Bar" style="width:0%"></div></div>
+    </div>
+    <div class="gauge-card">
+      <div class="gauge-icon">🌡️</div>
+      <div class="gauge-name">Soil Temp 2</div>
+      <div class="gauge-reading" id="gSoilTemp2">—<span class="gauge-unit">°C</span></div>
+      <div class="gauge-bar"><div class="gauge-fill warm" id="gSoilTemp2Bar" style="width:0%"></div></div>
+    </div>
+    <div class="gauge-card">
+      <div class="gauge-icon">🌤️</div>
+      <div class="gauge-name">Air Temperature</div>
+      <div class="gauge-reading" id="gAirTemp">—<span class="gauge-unit">°C</span></div>
+      <div class="gauge-bar"><div class="gauge-fill warm" id="gAirTempBar" style="width:0%"></div></div>
+    </div>
+    <div class="gauge-card">
+      <div class="gauge-icon">🌫️</div>
+      <div class="gauge-name">Humidity</div>
+      <div class="gauge-reading" id="gHumidity">—<span class="gauge-unit">%</span></div>
+      <div class="gauge-bar"><div class="gauge-fill" id="gHumidityBar" style="width:0%"></div></div>
+    </div>
+    <div class="gauge-card">
+      <div class="gauge-icon">🔵</div>
+      <div class="gauge-name">Pressure</div>
+      <div class="gauge-reading" id="gPressure">—<span class="gauge-unit">hPa</span></div>
+      <div class="gauge-bar"><div class="gauge-fill" id="gPressureBar" style="width:50%"></div></div>
+    </div>
+    <div class="gauge-card">
+      <div class="gauge-icon">📡</div>
+      <div class="gauge-name">Front Ultrasonic</div>
+      <div class="gauge-reading" id="gUsFront">—<span class="gauge-unit">cm</span></div>
+      <div class="gauge-bar"><div class="gauge-fill" id="gUsFrontBar" style="width:0%"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CHARTS -->
+<section id="charts" class="section-wrap">
+  <div class="section-head">
+    <h2>Trend Analysis</h2>
+    <span class="tag">Historical</span>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Soil Moisture Over Time</div>
+      <div class="chart-area">
+        <canvas id="moistureChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Temperature Readings</div>
+      <div class="chart-area">
+        <canvas id="tempChart"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GPS MAP -->
+<section id="map" class="section-wrap">
+  <div class="section-head">
+    <h2>Patrol Map</h2>
+    <span class="tag">GPS Waypoints</span>
+  </div>
+  <div class="map-card">
+    <div class="map-area">
+      <canvas id="gpsCanvas"></canvas>
+    </div>
+    <div class="map-legend">
+      <span><span class="legend-dot" style="background:var(--lime)"></span>Waypoint</span>
+      <span><span class="legend-dot" style="background:var(--amber)"></span>Stress Detected</span>
+      <span><span class="legend-dot" style="background:#4fc3f7"></span>Rover Position</span>
+      <span><span class="legend-dot" style="background:rgba(255,255,255,0.2)"></span>Patrol Path</span>
+    </div>
+  </div>
+</section>
+
+<!-- CROP IMAGE GALLERY -->
+<section id="gallery" class="section-wrap">
+  <div class="section-head">
+    <h2>Crop Image Gallery</h2>
+    <span class="tag">Live Captures</span>
+  </div>
+  <div class="gallery-grid" id="galleryGrid">
+    <!-- Populated by JS -->
+  </div>
+</section>
+
+<!-- RECENT READINGS TABLE -->
+<section class="section-wrap">
+  <div class="section-head">
+    <h2>Recent Readings</h2>
+    <span class="tag">Last 10</span>
+  </div>
+  <div class="chart-card" style="overflow-x:auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Moisture 1</th>
+          <th>Moisture 2</th>
+          <th>Soil °C</th>
+          <th>Air °C</th>
+          <th>Humidity</th>
+          <th>GPS</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="readingsTable">
+        <tr><td colspan="8" style="text-align:center;opacity:0.4;padding:2rem">Loading readings...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- CROP KNOWLEDGE -->
+<section id="knowledge" class="section-wrap">
+  <div class="section-head">
+    <h2>Crop Intelligence</h2>
+    <span class="tag">Health & Importance</span>
+  </div>
+  <div class="knowledge-grid">
+
+    <div class="crop-card">
+      <div class="crop-hero" style="background:linear-gradient(135deg,#1a3a0a,#2d6b1a)">🌽</div>
+      <div class="crop-body">
+        <div class="crop-name">Maize (Corn)</div>
+        <div class="crop-latin">Zea mays</div>
+        <div class="crop-desc">One of the world's most important staple crops, maize feeds both humans and livestock across every continent. Healthy maize shows deep green, erect leaves with firm stalks. Yellowing of lower leaves often signals nitrogen deficiency — early detection saves entire harvests.</div>
+        <div class="crop-tags">
+          <span class="crop-tag">Staple</span>
+          <span class="crop-tag">High Yield</span>
+          <span class="crop-tag">Water Sensitive</span>
+        </div>
+        <div class="crop-health-bar">
+          <span>Health Index</span>
+          <div class="health-track"><div class="health-fill" style="width:82%"></div></div>
+          <span>82%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="crop-card">
+      <div class="crop-hero" style="background:linear-gradient(135deg,#0a2a1a,#1a5a30)">🍅</div>
+      <div class="crop-body">
+        <div class="crop-name">Tomato</div>
+        <div class="crop-latin">Solanum lycopersicum</div>
+        <div class="crop-desc">A globally consumed fruit crop that demands consistent soil moisture and warm temperatures. Tomato plants show stress through leaf curl, blossom drop, and dark patches. Early blight and late blight spread rapidly — daily visual scouting with AI detection can prevent losses of up to 70%.</div>
+        <div class="crop-tags">
+          <span class="crop-tag">High Value</span>
+          <span class="crop-tag">Disease Prone</span>
+          <span class="crop-tag">Moisture Critical</span>
+        </div>
+        <div class="crop-health-bar">
+          <span>Health Index</span>
+          <div class="health-track"><div class="health-fill" style="width:74%"></div></div>
+          <span>74%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="crop-card">
+      <div class="crop-hero" style="background:linear-gradient(135deg,#1a1a0a,#3a3a10)">🌾</div>
+      <div class="crop-body">
+        <div class="crop-name">Rice</div>
+        <div class="crop-latin">Oryza sativa</div>
+        <div class="crop-desc">Rice feeds over half the world's population, making its health monitoring one of the highest-impact applications in precision agriculture. Brown spot disease and bacterial blight are responsible for billions in annual losses — both detectable in early stages through canopy color changes captured by rover cameras.</div>
+        <div class="crop-tags">
+          <span class="crop-tag">Global Staple</span>
+          <span class="crop-tag">Flood Tolerant</span>
+          <span class="crop-tag">Blight Sensitive</span>
+        </div>
+        <div class="crop-health-bar">
+          <span>Health Index</span>
+          <div class="health-track"><div class="health-fill" style="width:91%"></div></div>
+          <span>91%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="crop-card">
+      <div class="crop-hero" style="background:linear-gradient(135deg,#1a0a00,#4a2800)">🥜</div>
+      <div class="crop-body">
+        <div class="crop-name">Groundnut</div>
+        <div class="crop-latin">Arachis hypogaea</div>
+        <div class="crop-desc">A drought-tolerant legume and critical protein source across sub-Saharan Africa. Groundnuts fix nitrogen into soil, improving land for future crops. Aflatoxin contamination — caused by drought stress — is a major health and economic risk, making early moisture monitoring essential.</div>
+        <div class="crop-tags">
+          <span class="crop-tag">Legume</span>
+          <span class="crop-tag">Drought Tolerant</span>
+          <span class="crop-tag">Soil Enriching</span>
+        </div>
+        <div class="crop-health-bar">
+          <span>Health Index</span>
+          <div class="health-track"><div class="health-fill" style="width:88%"></div></div>
+          <span>88%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="crop-card">
+      <div class="crop-hero" style="background:linear-gradient(135deg,#0a1a0a,#1a4a20)">🥦</div>
+      <div class="crop-body">
+        <div class="crop-name">Cassava</div>
+        <div class="crop-latin">Manihot esculenta</div>
+        <div class="crop-desc">The caloric backbone of West and Central Africa, cassava is a hardy root crop that tolerates poor soils. Cassava Mosaic Virus — transmitted by whiteflies — causes mosaic yellowing on leaves visible from above. Rover-based image analysis can flag infected plants before the disease spreads.</div>
+        <div class="crop-tags">
+          <span class="crop-tag">Root Crop</span>
+          <span class="crop-tag">Hardy</span>
+          <span class="crop-tag">Virus Sensitive</span>
+        </div>
+        <div class="crop-health-bar">
+          <span>Health Index</span>
+          <div class="health-track"><div class="health-fill" style="width:79%"></div></div>
+          <span>79%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="crop-card">
+      <div class="crop-hero" style="background:linear-gradient(135deg,#0a0a1a,#1a1a4a)">🧅</div>
+      <div class="crop-body">
+        <div class="crop-name">Pepper</div>
+        <div class="crop-latin">Capsicum annuum</div>
+        <div class="crop-desc">Bell and hot peppers are high-value cash crops with narrow tolerances for temperature and moisture extremes. Pepper plants show early heat stress through leaf curl and bleaching. Consistent soil moisture between 60–80% is critical — exactly what this rover monitors autonomously.</div>
+        <div class="crop-tags">
+          <span class="crop-tag">Cash Crop</span>
+          <span class="crop-tag">Heat Sensitive</span>
+          <span class="crop-tag">High Value</span>
+        </div>
+        <div class="crop-health-bar">
+          <span>Health Index</span>
+          <div class="health-track"><div class="health-fill" style="width:85%"></div></div>
+          <span>85%</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider" style="margin:0 2.5rem"></div>
+
+<footer>
+  <span>AgroRover Field Intelligence v1.0 — Local Dashboard — No internet required</span>
+  <span id="footerTime">—</span>
+</footer>
+
+<!-- CHART.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<script>
+// ── Shared chart style ───────────────────────────────────────
+Chart.defaults.color = 'rgba(168,216,160,0.6)';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 11;
+
+const maxPoints = 20;
+const labels    = [];
+const moist1    = [], moist2 = [];
+const airTemps  = [], soilTemps = [];
+
+// ── Moisture chart ───────────────────────────────────────────
+const mCtx = document.getElementById('moistureChart').getContext('2d');
+const moistureChart = new Chart(mCtx, {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Moisture 1',
+        data: moist1,
+        borderColor: '#7bc67a',
+        backgroundColor: 'rgba(123,198,122,0.08)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#7bc67a',
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Moisture 2',
+        data: moist2,
+        borderColor: '#4a8c3f',
+        backgroundColor: 'rgba(74,140,63,0.05)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#4a8c3f',
+        tension: 0.4,
+        fill: true,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: true, labels: { boxWidth: 10, padding: 16 } } },
+    scales: {
+      y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.04)' },
+           ticks: { callback: v => v + '%' } },
+      x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } }
+    }
+  }
+});
+
+// ── Temperature chart ────────────────────────────────────────
+const tCtx = document.getElementById('tempChart').getContext('2d');
+const tempChart = new Chart(tCtx, {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Air',
+        data: airTemps,
+        borderColor: '#e8b94b',
+        backgroundColor: 'rgba(232,185,75,0.08)',
+        borderWidth: 2,
+        pointRadius: 3,
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Soil',
+        data: soilTemps,
+        borderColor: '#c8a84b',
+        backgroundColor: 'rgba(200,168,75,0.05)',
+        borderWidth: 2,
+        pointRadius: 3,
+        tension: 0.4,
+        fill: true,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: true, labels: { boxWidth: 10, padding: 16 } } },
+    scales: {
+      y: { grid: { color: 'rgba(255,255,255,0.04)' },
+           ticks: { callback: v => v + '°' } },
+      x: { grid: { display: false }, ticks: { maxTicksLimit: 5 } }
+    }
+  }
+});
+
+// ── GPS Canvas ───────────────────────────────────────────────
+const gpsCanvas = document.getElementById('gpsCanvas');
+const gpsCtx    = gpsCanvas.getContext('2d');
+let gpsReadings = [];
+
+function drawGPS(readings) {
+  const W = gpsCanvas.offsetWidth;
+  const H = gpsCanvas.offsetHeight;
+  gpsCanvas.width  = W;
+  gpsCanvas.height = H;
+
+  // Background grid
+  gpsCtx.strokeStyle = 'rgba(123,198,122,0.06)';
+  gpsCtx.lineWidth   = 1;
+  for (let x = 0; x < W; x += 40) {
+    gpsCtx.beginPath(); gpsCtx.moveTo(x, 0); gpsCtx.lineTo(x, H); gpsCtx.stroke();
+  }
+  for (let y = 0; y < H; y += 40) {
+    gpsCtx.beginPath(); gpsCtx.moveTo(0, y); gpsCtx.lineTo(W, y); gpsCtx.stroke();
+  }
+
+  if (!readings || readings.length === 0) {
+    gpsCtx.fillStyle = 'rgba(168,216,160,0.3)';
+    gpsCtx.font = '14px DM Mono';
+    gpsCtx.textAlign = 'center';
+    gpsCtx.fillText('Waiting for GPS data...', W/2, H/2);
+    return;
+  }
+
+  // Normalize coordinates to canvas
+  const lats = readings.filter(r => r.latitude).map(r => r.latitude);
+  const lons = readings.filter(r => r.longitude).map(r => r.longitude);
+  if (lats.length === 0) return;
+
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+  const pad = 60;
+
+  function toX(lon) {
+    if (maxLon === minLon) return W / 2;
+    return pad + ((lon - minLon) / (maxLon - minLon)) * (W - pad * 2);
+  }
+  function toY(lat) {
+    if (maxLat === minLat) return H / 2;
+    return H - pad - ((lat - minLat) / (maxLat - minLat)) * (H - pad * 2);
+  }
+
+  // Draw path
+  const pts = readings.filter(r => r.latitude);
+  if (pts.length > 1) {
+    gpsCtx.beginPath();
+    gpsCtx.strokeStyle = 'rgba(123,198,122,0.25)';
+    gpsCtx.lineWidth   = 2;
+    gpsCtx.setLineDash([6, 4]);
+    gpsCtx.moveTo(toX(pts[0].longitude), toY(pts[0].latitude));
+    pts.forEach(r => gpsCtx.lineTo(toX(r.longitude), toY(r.latitude)));
+    gpsCtx.stroke();
+    gpsCtx.setLineDash([]);
+  }
+
+  // Draw waypoints
+  pts.forEach((r, i) => {
+    const x = toX(r.longitude);
+    const y = toY(r.latitude);
+    const stressed = r.stress_flag === 1;
+
+    // Glow
+    const grd = gpsCtx.createRadialGradient(x, y, 0, x, y, 18);
+    grd.addColorStop(0, stressed ? 'rgba(192,57,43,0.3)' : 'rgba(123,198,122,0.2)');
+    grd.addColorStop(1, 'transparent');
+    gpsCtx.beginPath();
+    gpsCtx.arc(x, y, 18, 0, Math.PI * 2);
+    gpsCtx.fillStyle = grd;
+    gpsCtx.fill();
+
+    // Dot
+    gpsCtx.beginPath();
+    gpsCtx.arc(x, y, 6, 0, Math.PI * 2);
+    gpsCtx.fillStyle = stressed ? '#e74c3c' : '#7bc67a';
+    gpsCtx.fill();
+
+    // Label
+    gpsCtx.fillStyle = 'rgba(168,216,160,0.8)';
+    gpsCtx.font = '10px DM Mono';
+    gpsCtx.textAlign = 'center';
+    gpsCtx.fillText(`WP${i+1}`, x, y - 14);
+  });
+
+  // Rover position (last reading)
+  const last = pts[pts.length - 1];
+  const rx = toX(last.longitude), ry = toY(last.latitude);
+  gpsCtx.beginPath();
+  gpsCtx.arc(rx, ry, 9, 0, Math.PI * 2);
+  gpsCtx.fillStyle = '#4fc3f7';
+  gpsCtx.fill();
+  gpsCtx.strokeStyle = 'rgba(79,195,247,0.4)';
+  gpsCtx.lineWidth = 3;
+  gpsCtx.stroke();
+}
+
+// ── Gallery ──────────────────────────────────────────────────
+function updateGallery(readings) {
+  const grid = document.getElementById('galleryGrid');
+  const withImages = readings.filter(r => r.image_path);
+
+  if (withImages.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;opacity:0.4;font-family:'DM Mono',monospace;font-size:0.8rem;">
+      No crop images captured yet — rover captures on waypoint arrival
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = withImages.slice(0, 12).map(r => {
+    const stressed = r.stress_flag === 1;
+    const score    = ((r.stress_score || 0) * 100).toFixed(1);
+    const fname    = r.image_path.split('/').pop();
+    const annot    = fname.replace('.jpg', '_annotated.jpg');
+    const time     = r.datetime || '—';
+
+    return `
+    <div class="gallery-card">
+      <img class="gallery-img"
+           src="/images/${annot}"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+           alt="Crop capture">
+      <div class="gallery-img-placeholder" style="display:none">${stressed ? '🍂' : '🌿'}</div>
+      <div class="gallery-info">
+        <div class="gallery-meta">${time}</div>
+        <div class="gallery-verdict ${stressed ? 'stressed' : 'healthy'}">
+          ${stressed ? '⚠️ Stressed' : '✅ Healthy'}
+        </div>
+        <div class="gallery-score">Stress score: ${score}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Readings table ───────────────────────────────────────────
+function updateTable(readings) {
+  const tbody = document.getElementById('readingsTable');
+  if (!readings || readings.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;opacity:0.4;padding:2rem">No readings yet</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = readings.slice(0, 10).map(r => {
+    const stressed = r.stress_flag === 1;
+    const badge    = stressed
+      ? '<span class="badge alert">⚠️ Stressed</span>'
+      : '<span class="badge ok">✅ Healthy</span>';
+    const gps = r.latitude
+      ? `${r.latitude.toFixed(5)}, ${r.longitude.toFixed(5)}`
+      : '—';
+    return `<tr>
+      <td>${r.datetime || '—'}</td>
+      <td>${r.moisture_1 ?? '—'}%</td>
+      <td>${r.moisture_2 ?? '—'}%</td>
+      <td>${r.soil_temp_1 ?? '—'}°C</td>
+      <td>${r.air_temp ?? '—'}°C</td>
+      <td>${r.humidity ?? '—'}%</td>
+      <td style="font-size:0.7rem">${gps}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Update gauges ────────────────────────────────────────────
+function updateGauges(s, r) {
+  // Hero
+  document.getElementById('hMoisture1').innerHTML = `${Math.round(s.avg_moisture_1 || 0)}<span class="stat-unit">%</span>`;
+  document.getElementById('hAirTemp').innerHTML   = `${(s.avg_air_temp || 0).toFixed(1)}<span class="stat-unit">°C</span>`;
+  document.getElementById('hHumidity').innerHTML  = `${(s.avg_humidity || 0).toFixed(1)}<span class="stat-unit">%</span>`;
+  document.getElementById('hStress').innerHTML    = s.stress_events || 0;
+
+  const latest = r && r[0];
+  if (!latest) return;
+
+  const m1 = latest.moisture_1 || 0;
+  const m2 = latest.moisture_2 || 0;
+  const st1 = latest.soil_temp_1 || 0;
+  const st2 = latest.soil_temp_2 || 0;
+  const at  = latest.air_temp   || 0;
+  const hum = latest.humidity   || 0;
+  const prs = latest.pressure   || 1013;
+  const usf = latest.us_front   || 0;
+
+  document.getElementById('gMoisture1').innerHTML = `${m1}<span class="gauge-unit">%</span>`;
+  document.getElementById('gMoisture2').innerHTML = `${m2}<span class="gauge-unit">%</span>`;
+  document.getElementById('gSoilTemp1').innerHTML = `${st1}<span class="gauge-unit">°C</span>`;
+  document.getElementById('gSoilTemp2').innerHTML = `${st2}<span class="gauge-unit">°C</span>`;
+  document.getElementById('gAirTemp').innerHTML   = `${at}<span class="gauge-unit">°C</span>`;
+  document.getElementById('gHumidity').innerHTML  = `${hum}<span class="gauge-unit">%</span>`;
+  document.getElementById('gPressure').innerHTML  = `${Math.round(prs)}<span class="gauge-unit">hPa</span>`;
+  document.getElementById('gUsFront').innerHTML   = `${usf}<span class="gauge-unit">cm</span>`;
+
+  document.getElementById('gMoisture1Bar').style.width = `${m1}%`;
+  document.getElementById('gMoisture2Bar').style.width = `${m2}%`;
+  document.getElementById('gSoilTemp1Bar').style.width = `${Math.min(100, st1 * 2)}%`;
+  document.getElementById('gSoilTemp2Bar').style.width = `${Math.min(100, st2 * 2)}%`;
+  document.getElementById('gAirTempBar').style.width   = `${Math.min(100, at * 2)}%`;
+  document.getElementById('gHumidityBar').style.width  = `${hum}%`;
+  document.getElementById('gUsFrontBar').style.width   = `${Math.min(100, usf / 3)}%`;
+}
+
+// ── Update charts ────────────────────────────────────────────
+function pushChartData(readings) {
+  readings.slice(0, 10).reverse().forEach(r => {
+    const t = r.datetime ? r.datetime.split(' ')[1].slice(0,5) : '—';
+    if (!labels.includes(t)) {
+      labels.push(t);
+      moist1.push(r.moisture_1);
+      moist2.push(r.moisture_2);
+      airTemps.push(r.air_temp);
+      soilTemps.push(r.soil_temp_1);
+      if (labels.length > maxPoints) {
+        labels.shift(); moist1.shift(); moist2.shift();
+        airTemps.shift(); soilTemps.shift();
+      }
+    }
+  });
+  moistureChart.update();
+  tempChart.update();
+}
+
+// ── Clock ────────────────────────────────────────────────────
+function tick() {
+  const now = new Date().toLocaleTimeString();
+  document.getElementById('liveTime').textContent = now;
+  document.getElementById('footerTime').textContent = new Date().toLocaleString();
+}
+setInterval(tick, 1000);
+tick();
+
+// ── Main fetch loop ──────────────────────────────────────────
+async function refresh() {
+  try {
+    const [sumRes, readRes] = await Promise.all([
+      fetch('/api/summary'),
+      fetch('/api/readings')
+    ]);
+    const summary  = await sumRes.json();
+    const readings = await readRes.json();
+
+    updateGauges(summary, readings);
+    updateTable(readings);
+    updateGallery(readings);
+    pushChartData(readings);
+    drawGPS(readings);
+    gpsReadings = readings;
+  } catch(e) {
+    console.warn('Fetch error:', e);
+  }
+}
+
+refresh();
+setInterval(refresh, 5000);   // refresh every 5s
+</script>
+</body>
+</html>
