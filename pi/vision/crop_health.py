@@ -54,15 +54,14 @@ class CropHealthAnalyzer:
             log.info("CropHealthAnalyzer: simulation mode")
             return
         try:
-            from picamera2 import Picamera2
-            self._camera = Picamera2()
-            config = self._camera.create_still_configuration(
-                main={"size": self.resolution}
-            )
-            self._camera.configure(config)
-            self._camera.start()
-            time.sleep(2)   # warm-up
-            log.info("CropHealthAnalyzer: camera started")
+            import cv2 as _cv2
+            self._camera = _cv2.VideoCapture(0)
+            # warm up
+            for _ in range(15):
+                self._camera.read()
+            if not self._camera.isOpened():
+                raise RuntimeError("Webcam not accessible")
+            log.info("CropHealthAnalyzer: webcam started")
         except Exception as e:
             log.error(f"CropHealthAnalyzer: camera init failed — {e}")
             log.info("CropHealthAnalyzer: falling back to simulation")
@@ -71,8 +70,12 @@ class CropHealthAnalyzer:
     def stop(self):
         if self._camera:
             try:
-                self._camera.stop()
-                self._camera.close()
+                import cv2 as _cv2
+                if hasattr(self._camera, "release"):
+                    self._camera.release()   # webcam
+                else:
+                    self._camera.stop()
+                    self._camera.close()     # picamera2
             except Exception:
                 pass
 
@@ -106,11 +109,15 @@ class CropHealthAnalyzer:
         full_path = os.path.join(self.image_dir, filename)
 
         if self.simulate:
-            # Generate a synthetic test image
             return self._generate_test_image(full_path)
 
         try:
-            self._camera.capture_file(full_path)
+            import cv2 as _cv2
+            ret, frame = self._camera.read()
+            if not ret:
+                raise RuntimeError("Failed to read frame")
+            frame = _cv2.resize(frame, (1280, 720))
+            _cv2.imwrite(full_path, frame)
             log.info(f"CropHealthAnalyzer: captured {filename}")
             return full_path
         except Exception as e:
