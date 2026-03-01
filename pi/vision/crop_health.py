@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 class CropHealthAnalyzer:
 
     def __init__(self, image_dir: str = None, simulate: bool = False):
-        from pi.vision.config import (
+        from pi.config import (
             IMAGE_DIR, CAMERA_RESOLUTION, CAMERA_FRAMERATE,
             YELLOW_LOW, YELLOW_HIGH, GREEN_LOW, GREEN_HIGH, STRESS_THRESHOLD
         )
