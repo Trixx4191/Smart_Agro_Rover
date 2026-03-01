@@ -1,6 +1,6 @@
 """
 vision/crop_health.py
-──────────────────────
+
 Captures images from the Pi Camera and analyzes them for
 early crop stress indicators using OpenCV HSV color analysis.
 
@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 class CropHealthAnalyzer:
 
     def __init__(self, image_dir: str = None, simulate: bool = False):
-        from pi.config import (
+        from pi.vision.config import (
             IMAGE_DIR, CAMERA_RESOLUTION, CAMERA_FRAMERATE,
             YELLOW_LOW, YELLOW_HIGH, GREEN_LOW, GREEN_HIGH, STRESS_THRESHOLD
         )
@@ -76,7 +76,7 @@ class CropHealthAnalyzer:
             except Exception:
                 pass
 
-    # ── Main method ───────────────────────────────────────────
+    #  Main method 
 
     def capture_and_analyze(self) -> Tuple[Optional[str], bool, float]:
         """
@@ -98,7 +98,7 @@ class CropHealthAnalyzer:
         """Analyze an existing image file."""
         return self._analyze(image_path)
 
-    # ── Internal ──────────────────────────────────────────────
+    #  Internal ─
 
     def _capture_image(self) -> Optional[str]:
         ts        = datetime.now().strftime("%Y%m%d_%H%M%S")

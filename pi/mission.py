@@ -1,6 +1,6 @@
 """
 mission.py
-───────────
+
 Top-level mission controller. Wires all subsystems together
 and runs the patrol loop.
 
@@ -51,16 +51,16 @@ def main(simulate: bool = False):
     log.info(f"  Mode: {'SIMULATION' if simulate else 'HARDWARE'}")
     log.info("=" * 55)
 
-    # ── Import subsystems ─────────────────────────────────────
+    #  Import subsystems 
     from pi.comms.serial_handler    import SerialHandler
     from pi.sensors.data_logger     import DataLogger
     from pi.navigation.gps_reader   import GPSReader
     from pi.navigation.imu_reader   import IMUReader
     from pi.navigation.waypoint_nav import WaypointNavigator
     from pi.vision.crop_health      import CropHealthAnalyzer
-    from pi.dashboard.server        import DashboardServer
+    from pi.vision.dashboard.server        import DashboardServer
 
-    # ── Initialise ────────────────────────────────────────────
+    #  Initialise 
     log.info("Initialising subsystems...")
 
     arduino = SerialHandler(simulate=simulate)
@@ -70,7 +70,7 @@ def main(simulate: bool = False):
     vision  = CropHealthAnalyzer(simulate=simulate)
     dash    = DashboardServer(logger)
 
-    # ── Connect ───────────────────────────────────────────────
+    #  Connect ─
     if not arduino.connect():
         log.error("Failed to connect to Arduino — aborting")
         sys.exit(1)
@@ -88,7 +88,7 @@ def main(simulate: bool = False):
     if not arduino.is_ready():
         log.warning("Arduino ready signal not received — proceeding anyway")
 
-    # ── Dashboard ─────────────────────────────────────────────
+    #  Dashboard ─
     dash_thread = threading.Thread(
         target=dash.run,
         kwargs={"debug": False},
@@ -97,7 +97,7 @@ def main(simulate: bool = False):
     dash_thread.start()
     log.info("Dashboard running at http://localhost:5000")
 
-    # ── Navigator ─────────────────────────────────────────────
+    #  Navigator ─
     nav = WaypointNavigator(arduino, gps, imu, logger, vision)
     nav.load_waypoints(build_waypoints())
 
@@ -109,7 +109,7 @@ def main(simulate: bool = False):
 
     nav.on_arrival(on_arrival)
 
-    # ── Graceful shutdown ─────────────────────────────────────
+    #  Graceful shutdown 
     def shutdown():
         log.info("Shutdown signal received")
         nav.abort()
@@ -126,7 +126,7 @@ def main(simulate: bool = False):
     signal.signal(signal.SIGINT,  lambda s, f: shutdown())
     signal.signal(signal.SIGTERM, lambda s, f: shutdown())
 
-    # ── Run patrol ────────────────────────────────────────────
+    #  Run patrol 
     log.info("Starting patrol — press Ctrl+C to stop safely")
     try:
         nav.run_patrol(loops=0)   # infinite loop
