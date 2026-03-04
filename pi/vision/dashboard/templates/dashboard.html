@@ -34,7 +34,7 @@
     overflow-x: hidden;
   }
 
-  /* ── Background texture ── */
+  /*  Background texture  */
   body::before {
     content: '';
     position: fixed;
@@ -47,7 +47,7 @@
     z-index: 0;
   }
 
-  /* ── NAV ── */
+  /*  NAV  */
   nav {
     position: sticky;
     top: 0;
@@ -130,10 +130,10 @@
     50%       { opacity: 0.4; transform: scale(0.8); }
   }
 
-  /* ── SECTIONS ── */
+  /*  SECTIONS  */
   section { position: relative; z-index: 1; }
 
-  /* ── HERO ── */
+  /*  HERO  */
   .hero {
     padding: 5rem 2.5rem 3rem;
     display: grid;
@@ -233,7 +233,7 @@
   .stat-trend.down { color: var(--amber); }
   .stat-trend.alert { color: var(--rust); }
 
-  /* ── SECTION HEADING ── */
+  /*  SECTION HEADING  */
   .section-wrap {
     max-width: 1400px;
     margin: 0 auto;
@@ -268,7 +268,7 @@
     border-radius: 20px;
   }
 
-  /* ── GAUGES ── */
+  /*  GAUGES  */
   .gauges-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -345,7 +345,7 @@
   .gauge-fill.warm { background: linear-gradient(90deg, var(--gold), var(--amber)); }
   .gauge-fill.alert { background: linear-gradient(90deg, var(--rust), var(--amber)); }
 
-  /* ── CHARTS ── */
+  /*  CHARTS  */
   .charts-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -377,7 +377,7 @@
 
   canvas { width: 100% !important; }
 
-  /* ── GPS MAP ── */
+  /*  GPS MAP  */
   .map-card {
     background: var(--glass);
     border: 1px solid var(--glass-border);
@@ -416,7 +416,7 @@
     margin-right: 5px;
   }
 
-  /* ── IMAGE GALLERY ── */
+  /*  IMAGE GALLERY  */
   .gallery-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -498,7 +498,7 @@
     opacity: 0.6;
   }
 
-  /* ── CROP KNOWLEDGE GALLERY ── */
+  /*  CROP KNOWLEDGE GALLERY  */
   .knowledge-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -601,7 +601,7 @@
     background: linear-gradient(90deg, var(--sprout), var(--lime));
   }
 
-  /* ── DATA TABLE ── */
+  /*  DATA TABLE  */
   .data-table {
     width: 100%;
     border-collapse: collapse;
@@ -644,7 +644,7 @@
   .badge.warn { background: rgba(232,185,75,0.15); color: var(--amber); }
   .badge.alert { background: rgba(192,57,43,0.15); color: #e74c3c; }
 
-  /* ── FOOTER ── */
+  /*  FOOTER  */
   footer {
     position: relative;
     z-index: 1;
@@ -659,14 +659,14 @@
     opacity: 0.4;
   }
 
-  /* ── DIVIDER ── */
+  /*  DIVIDER  */
   .divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
     margin: 1rem 0 3rem;
   }
 
-  /* ── REFRESH BAR ── */
+  /*  REFRESH BAR  */
   .refresh-bar {
     position: fixed;
     top: 64px;
@@ -682,7 +682,7 @@
     to   { width: 100%; }
   }
 
-  /* ── RESPONSIVE ── */
+  /*  RESPONSIVE  */
   @media (max-width: 900px) {
     .hero { grid-template-columns: 1fr; }
     .charts-grid { grid-template-columns: 1fr; }
@@ -1018,7 +1018,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 
 <script>
-// ── Shared chart style ───────────────────────────────────────
+//  Shared chart style ─
 Chart.defaults.color = 'rgba(168,216,160,0.6)';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
 Chart.defaults.font.family = "'DM Mono', monospace";
@@ -1029,7 +1029,7 @@ const labels    = [];
 const moist1    = [], moist2 = [];
 const airTemps  = [], soilTemps = [];
 
-// ── Moisture chart ───────────────────────────────────────────
+//  Moisture chart ─
 const mCtx = document.getElementById('moistureChart').getContext('2d');
 const moistureChart = new Chart(mCtx, {
   type: 'line',
@@ -1072,7 +1072,7 @@ const moistureChart = new Chart(mCtx, {
   }
 });
 
-// ── Temperature chart ────────────────────────────────────────
+//  Temperature chart 
 const tCtx = document.getElementById('tempChart').getContext('2d');
 const tempChart = new Chart(tCtx, {
   type: 'line',
@@ -1113,7 +1113,7 @@ const tempChart = new Chart(tCtx, {
   }
 });
 
-// ── GPS Canvas ───────────────────────────────────────────────
+//  GPS Canvas 
 const gpsCanvas = document.getElementById('gpsCanvas');
 const gpsCtx    = gpsCanvas.getContext('2d');
 let gpsReadings = [];
@@ -1213,7 +1213,7 @@ function drawGPS(readings) {
   gpsCtx.stroke();
 }
 
-// ── Gallery ──────────────────────────────────────────────────
+//  Gallery ─
 function updateGallery(readings) {
   const grid = document.getElementById('galleryGrid');
   const withImages = readings.filter(r => r.image_path);
@@ -1250,7 +1250,7 @@ function updateGallery(readings) {
   }).join('');
 }
 
-// ── Readings table ───────────────────────────────────────────
+//  Readings table ─
 function updateTable(readings) {
   const tbody = document.getElementById('readingsTable');
   if (!readings || readings.length === 0) {
@@ -1278,7 +1278,7 @@ function updateTable(readings) {
   }).join('');
 }
 
-// ── Update gauges ────────────────────────────────────────────
+//  Update gauges 
 function updateGauges(s, r) {
   // Hero
   document.getElementById('hMoisture1').innerHTML = `${Math.round(s.avg_moisture_1 || 0)}<span class="stat-unit">%</span>`;
@@ -1316,7 +1316,7 @@ function updateGauges(s, r) {
   document.getElementById('gUsFrontBar').style.width   = `${Math.min(100, usf / 3)}%`;
 }
 
-// ── Update charts ────────────────────────────────────────────
+//  Update charts 
 function pushChartData(readings) {
   readings.slice(0, 10).reverse().forEach(r => {
     const t = r.datetime ? r.datetime.split(' ')[1].slice(0,5) : '—';
@@ -1336,7 +1336,7 @@ function pushChartData(readings) {
   tempChart.update();
 }
 
-// ── Clock ────────────────────────────────────────────────────
+//  Clock ─
 function tick() {
   const now = new Date().toLocaleTimeString();
   document.getElementById('liveTime').textContent = now;
@@ -1345,7 +1345,7 @@ function tick() {
 setInterval(tick, 1000);
 tick();
 
-// ── Main fetch loop ──────────────────────────────────────────
+//  Main fetch loop 
 async function refresh() {
   try {
     const [sumRes, readRes] = await Promise.all([

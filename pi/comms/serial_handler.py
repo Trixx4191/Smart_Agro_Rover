@@ -1,6 +1,6 @@
 """
 comms/serial_handler.py
-───────────────────────
+─
 Manages the USB serial link between Raspberry Pi and Arduino.
 Runs a background reader thread so the main mission loop
 never blocks waiting for data.
@@ -52,7 +52,7 @@ class SerialHandler:
         self._ready    = False
         self._callbacks = []             # optional listeners
 
-    # ── Connection ────────────────────────────────────────────
+    #  Connection 
 
     def connect(self) -> bool:
         if self.simulate:
@@ -91,7 +91,7 @@ class SerialHandler:
     def is_ready(self) -> bool:
         return self._ready
 
-    # ── Send ──────────────────────────────────────────────────
+    #  Send 
 
     def send(self, command: Dict[str, Any]) -> bool:
         """Send a JSON command to the Arduino."""
@@ -114,7 +114,7 @@ class SerialHandler:
             log.error(f"SerialHandler: send error — {e}")
             return False
 
-    # ── Convenience command wrappers ──────────────────────────
+    #  Convenience command wrappers 
 
     def move(self, direction: str, speed: int = None):
         from pi.config import SPEED_CRUISE
@@ -132,7 +132,7 @@ class SerialHandler:
     def request_sample(self):
         self.send({"cmd": "sample"})
 
-    # ── Data access ───────────────────────────────────────────
+    #  Data access ─
 
     def latest(self) -> Dict[str, Any]:
         """Return the most recent full sensor packet."""
@@ -148,7 +148,7 @@ class SerialHandler:
         """Register a function to be called on every new packet."""
         self._callbacks.append(fn)
 
-    # ── Internal ──────────────────────────────────────────────
+    #  Internal 
 
     def _read_loop(self):
         """Background thread — reads lines from Arduino serial."""
