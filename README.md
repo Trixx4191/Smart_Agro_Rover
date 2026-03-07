@@ -104,15 +104,46 @@ See `FarmRover_BOM.xlsx` for the full 27-item bill of materials .
 ## Flowchart Design
 ```mermaid
 graph TD
-    A[Start Mission] --> B[RPi: Path Planning]
-    B --> C[Move to Plant]
-    C --> D[Deploy Robot Arm & NPK Sensor]
-    D --> E[USB Camera: Image Capture]
-    E --> F[HSV Conversion & Stress Analysis]
-    F --> G[Log Data & Update Map]
-    G --> H{More Plants?}
-    H -- Yes --> B
-    H -- No --> I[Return to Base]
+
+Start([Start System]) --> Init[Initialize Raspberry Pi, Arduino, Sensors & Camera]
+
+Init --> Connect[Establish Serial Communication between Raspberry Pi and Arduino]
+
+Connect --> Load[Load GPS Waypoints & Mission Plan]
+
+Load --> Nav[Navigation: Move Rover to Next Waypoint]
+
+Nav --> Obstacle{Obstacle Detected?}
+
+Obstacle -- Yes --> Avoid[Arduino Executes Obstacle Avoidance]
+Avoid --> Nav
+
+Obstacle -- No --> Stop[Stop at Plant Location]
+
+Stop --> Soil[Collect Soil Data: Moisture & Temperature Sensors]
+
+Soil --> Env[Collect Environmental Data: Humidity & Air Temperature]
+
+Env --> Capture[Camera Captures Crop Image]
+
+Capture --> HSV[Convert Image from RGB to HSV]
+
+HSV --> Detect[Detect Yellow/Brown Pixels (Plant Stress)]
+
+Detect --> GLI[Calculate Green Leaf Index]
+
+GLI --> Fusion[Sensor Fusion: Combine Soil + Environment + Vision Data]
+
+Fusion --> Log[Store Data to SD Card]
+
+Log --> Map[Update Digital Farm Health Map]
+
+Map --> Next{More GPS Waypoints?}
+
+Next -- Yes --> Nav
+Next -- No --> Return[Return Rover to Base]
+
+Return --> End([Mission Complete])
 ```
 
 
