@@ -98,3 +98,24 @@ Measure them by walking the corners with a phone GPS app.
 ## Hardware BOM
 
 See `FarmRover_BOM.xlsx` for the full 27-item bill of materials .
+
+---
+
+## Flowchart Design
+```mermaid
+graph TD
+    A[Start Mission] --> B[RPi: Path Planning]
+    B --> C[Move to Plant]
+    C --> D[Deploy Robot Arm & NPK Sensor]
+    D --> E[USB Camera: Image Capture]
+    E --> F[HSV Conversion & Stress Analysis]
+    F --> G[Log Data & Update Map]
+    G --> H{More Plants?}
+    H -- Yes --> B
+    H -- No --> I[Return to Base]
+```
+
+
+
+
+
