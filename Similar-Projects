@@ -1,23 +1,116 @@
-# Similar Agricultural Rover Projects
+1. TerraSentia
 
-This document lists real-world projects that inspired the design of our Smart Agriculture Rover.
+🔗 ￼https://www.earthsense.co/terrasentia
 
-## 1. TerraSentia Agricultural Robot
-Autonomous crop monitoring rover developed by EarthSense.
-https://earthsense.co/terrasentia/
+Description
 
-## 2. Bonirob Precision Agriculture Robot
-A field robot designed for crop monitoring and weed detection.
-https://www.bosch.com/stories/bonirob/
+TerraSentia is a small autonomous agricultural robot designed to navigate between crop rows and collect detailed plant data. It focuses on under-canopy monitoring, allowing it to capture information that aerial systems like drones cannot access.  ￼
 
-## 3. Small Robot Company – Tom Robot
-An AI-powered robot used to scan farmland and analyze crop health.
-https://www.smallrobotcompany.com/
+Methods Used
+	•	Computer vision for plant analysis
+	•	Machine learning for crop measurements
+	•	Cameras and sensors
+	•	Vision-based navigation
 
-## 4. Hands Free Hectare Project
-A fully autonomous farming project developed by Harper Adams University.
-https://www.handsfreehectare.com/
+Design Approach
 
-## 5. Agricultural Monitoring Robot Research
-Research on autonomous robots for crop and soil monitoring.
-https://ieeexplore.ieee.org/
+The robot is lightweight and compact, designed to move between narrow crop rows. It uses a dual-system structure where high-level processing handles analysis and low-level systems control movement.
+Implementation Approach
+
+The robot moves through farms collecting plant data and analyzing crop conditions such as growth and disease detection in real time.  ￼
+
+
+
+2. Bonirob
+
+🔗 ￼https://www.researchgate.net/publication/375466023_BoniRob_an_autonomous_field_robot_platform_for_individual_plant_phenotyping
+
+Description
+
+Bonirob is an autonomous agricultural robot used for crop monitoring, weed detection, and field research. It is widely used in precision agriculture.  ￼
+
+Methods Used
+	•	Computer vision
+	•	Machine learning
+	•	GPS navigation
+	•	Sensor-based monitoring
+
+Design Approach
+
+Bonirob uses a modular design, meaning tools and sensors can be changed depending on the task. This makes it flexible for different farming operations.  ￼
+
+Implementation Approach
+
+It operates in farms by collecting crop data, identifying weeds, and performing targeted actions such as mechanical weeding instead of using chemicals.  ￼
+
+
+
+3. Tom Robot (Small Robot Company)
+
+🔗 https://medium.com/smallrobotcompany/small-robot-co-launches-tom-v4-next-generation-monitoring-robot-56b2f224d247￼
+
+Description
+
+Tom is an agricultural robot developed by Small Robot Company to scan crops and provide detailed plant-level data.  ￼
+
+Methods Used
+	•	Artificial intelligence
+	•	High-resolution cameras
+	•	Image recognition
+	•	Data mapping
+
+Design Approach
+
+Tom is designed as a lightweight ground robot with advanced imaging systems to monitor crops at the individual plant level.  ￼
+
+Implementation Approach
+
+The robot scans fields, detects weeds and crop health conditions, and generates detailed maps to guide farming decisions.  ￼
+
+
+
+4. AgriBot
+
+🔗 ￼https://agribot-project.eu/
+
+Description
+
+AgriBot is a smart agricultural robotics system focused on improving efficiency, safety, and sustainability in farming through automation.  ￼
+
+Methods Used
+	•	AI-driven robotics
+	•	Sensor systems
+	•	Data analytics
+	•	Connectivity technologies (e.g., 5G)
+
+Design Approach
+
+The system integrates robotics with digital technologies such as AI and connectivity tools to improve farm operations and monitoring.  ￼
+
+Implementation Approach
+
+AgriBot systems are used in real farms for tasks such as crop monitoring, spraying, and data collection, helping farmers improve productivity and reduce manual labor.  ￼
+
+
+
+5. FarmBot
+
+🔗 https://farmbot.com.au/
+
+Description
+
+FarmBot is an open-source automated farming system that performs planting, watering, and monitoring of crops.  ￼
+
+Methods Used
+	•	Computer-controlled farming system
+	•	Sensors
+	•	Automation software
+	•	Open-source platform
+
+Design Approach
+
+FarmBot uses a fixed gantry system instead of a moving rover. It operates within a defined area using precise coordinate control.  ￼
+
+Implementation Approach
+
+The system automatically performs farming tasks such as planting seeds, watering crops, and monitoring soil conditions using programmed instructions.  ￼
