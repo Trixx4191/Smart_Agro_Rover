@@ -67,7 +67,7 @@ def main(simulate: bool = False):
     gps     = GPSReader(simulate=simulate)
     imu     = IMUReader(simulate=simulate)
     logger  = DataLogger()
-    vision  = CropHealthAnalyzer(simulate=False)
+    vision  = CropHealthAnalyzer(simulate=False)  # Vision always simulates for now
     dash    = DashboardServer(logger)
 
     #  Connect ─

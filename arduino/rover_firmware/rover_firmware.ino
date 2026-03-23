@@ -48,7 +48,7 @@
 #include <Adafruit_BME280.h>
 #include <ArduinoJson.h>
 
-// ── Pin Definitions ─────────────────────────────────────────
+//  Pin Definitions 
 // Motors (L298N)
 #define MOTOR_IN1     4
 #define MOTOR_IN2     5
@@ -79,18 +79,18 @@
 #define ENC_RF    A3   // polled — right front
 #define ENC_RR    11   // polled — right rear (moved ENB off this pin)
 
-// ── Timing ──────────────────────────────────────────────────
+//  Timing ─
 #define SAMPLE_INTERVAL   2000   // ms between sensor broadcasts
 #define US_TIMEOUT        30000  // µs — ~5m max range
 #define OBSTACLE_DIST_CM  20     // auto-stop if closer than this (front)
 #define SERIAL_BAUD       115200
 
-// ── Sensor Objects ───────────────────────────────────────────
+//  Sensor Objects 
 OneWire           oneWire(ONE_WIRE_PIN);
 DallasTemperature dallasSensors(&oneWire);
 Adafruit_BME280   bme;
 
-// ── State Variables ──────────────────────────────────────────
+//  State Variables ─
 volatile long encLF = 0;   // encoder counts
 long encLR = 0, encRF = 0, encRR = 0;
 
@@ -102,12 +102,12 @@ char  currentDir[12] = "stop";
 unsigned long lastSampleTime = 0;
 unsigned long lastEncLR = 0, lastEncRF = 0, lastEncRR = 0;
 
-// ── ISR ─────────────────────────────────────────────────────
+//  ISR 
 void IRAM_ATTR onEncLF() {
   encLF++;
 }
 
-// ── Setup ────────────────────────────────────────────────────
+//  Setup ─
 void setup() {
   Serial.begin(SERIAL_BAUD);
 
@@ -146,7 +146,7 @@ void setup() {
   Serial.println("{\"status\":\"ready\",\"fw\":\"1.0.0\"}");
 }
 
-// ── Main Loop ────────────────────────────────────────────────
+//  Main Loop ─
 void loop() {
   // 1. Parse any incoming command from Pi
   if (Serial.available()) {
@@ -175,7 +175,7 @@ void loop() {
   }
 }
 
-// ── Motor Control ────────────────────────────────────────────
+//  Motor Control ─
 
 void setLeftMotors(bool forward, int speed) {
   digitalWrite(MOTOR_IN1, forward ? HIGH : LOW);
@@ -219,7 +219,7 @@ void turnRight(int speed) {
   setRightMotors(false, speed);
 }
 
-// ── Serial Command Parser ────────────────────────────────────
+//  Serial Command Parser 
 
 void handleSerialCommand() {
   String raw = Serial.readStringUntil('\n');
@@ -300,7 +300,7 @@ void handleSerialCommand() {
   Serial.println("{\"error\":\"unknown_cmd\"}");
 }
 
-// ── Sensor Reading ───────────────────────────────────────────
+//  Sensor Reading 
 
 int readMoisture(int pin) {
   // Capacitive sensor: high raw = dry, low raw = wet
