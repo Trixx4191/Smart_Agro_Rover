@@ -1,0 +1,800 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/appearances/protos/SandyGround.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/appearances/protos/BrushedAluminium.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/appearances/protos/RustyMetal.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/robots/clearpath/moose/protos/Moose.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/trees/protos/Oak.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/trees/protos/Sassafras.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/trees/protos/Cypress.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/factory/containers/protos/CardboardBox.proto"
+
+WorldInfo {
+  info [
+    "AgroRover - Autonomous Farm Rover Simulation"
+    "Modified Clearpath Moose chassis"
+    "Sensors: GPS, Compass, IMU, Camera, 2x Ultrasonic"
+    "Mission: Boustrophedon soil survey across 5 crop rows"
+    "Mirrors real hardware: Arduino Nano + Raspberry Pi 4"
+  ]
+  title "AgroRover Farm Simulation"
+  CFM 0.0003
+  ERP 0.4
+  basicTimeStep 16
+  FPS 250
+  defaultDamping Damping {
+  }
+  lineScale 0.2
+  contactProperties [
+    ContactProperties {
+      material1 "wheel"
+      material2 "moose wheel"
+      coulombFriction [
+        4
+      ]
+      softCFM 1e-05
+      bumpSound ""
+      rollSound ""
+      slideSound ""
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.29011592450312396 0.2643199921799704 0.9197650200370082 1.6238927151744176
+  position 2.524378959272538 -12.85394607354761 11.743224567868658
+  near 1
+  follow "AgroRover"
+}
+TexturedBackground {
+  texture "noon_cloudy_countryside"
+}
+TexturedBackgroundLight {
+  texture "noon_cloudy_countryside"
+}
+DEF FARM_GROUND Solid {
+  translation -25 -25 -0.01
+  children [
+    Shape {
+      appearance SandyGround {
+        textureTransform TextureTransform {
+          scale 8 8
+        }
+      }
+      geometry DEF FARM_EG ElevationGrid {
+        height [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ]
+        xDimension 11
+        xSpacing 5
+        yDimension 11
+        ySpacing 5
+      }
+    }
+  ]
+  contactMaterial "floor"
+  boundingObject USE FARM_EG
+  locked TRUE
+}
+DEF BG_PLANE Solid {
+  children [
+    Shape {
+      appearance SandyGround {
+        textureTransform TextureTransform {
+          rotation 0.2
+          scale 200 200
+        }
+      }
+      geometry DEF BG_GEO Plane {
+        size 2000 2000
+      }
+    }
+  ]
+  name "background_plane"
+  boundingObject USE BG_GEO
+  locked TRUE
+  radarCrossSection 4
+}
+DEF CROP_ROW_1 Solid {
+  translation -8 0 0.05
+  children [
+    Shape {
+      geometry Box {
+        size 1.2 42 0.1
+      }
+    }
+  ]
+  name "crop_row_1"
+  locked TRUE
+}
+Cypress {
+  translation -8 -18 0
+  name "crop1_plant1"
+}
+Cypress {
+  translation -8 -12 0
+  name "crop1_plant2"
+}
+Cypress {
+  translation -8 -6 0
+  name "crop1_plant3"
+}
+Cypress {
+  translation -8 0 0
+  name "crop1_plant4"
+}
+Cypress {
+  translation -8 6 0
+  name "crop1_plant5"
+}
+Cypress {
+  translation -8 12 0
+  name "crop1_plant6"
+}
+Cypress {
+  translation -8 18 0
+  name "crop1_plant7"
+}
+DEF CROP_ROW_2 Solid {
+  translation -4 0 0.05
+  children [
+    Shape {
+      geometry Box {
+        size 1.2 42 0.1
+      }
+    }
+  ]
+  name "crop_row_2"
+  locked TRUE
+}
+Cypress {
+  translation -4 -18 0
+  name "crop2_plant1"
+}
+Cypress {
+  translation -4 -12 0
+  name "crop2_plant2"
+}
+Cypress {
+  translation -4 -6 0
+  name "crop2_plant3"
+}
+Cypress {
+  translation -4 0 0
+  name "crop2_plant4"
+}
+Cypress {
+  translation -4 6 0
+  name "crop2_plant5"
+}
+Cypress {
+  translation -4 12 0
+  name "crop2_plant6"
+}
+Cypress {
+  translation -4 18 0
+  name "crop2_plant7"
+}
+DEF CROP_ROW_3 Solid {
+  translation 0 0 0.05
+  children [
+    Shape {
+      geometry Box {
+        size 1.2 42 0.1
+      }
+    }
+  ]
+  name "crop_row_3"
+  locked TRUE
+}
+Cypress {
+  translation 0 -18 0
+  name "crop3_plant1"
+}
+Cypress {
+  translation 0 -12 0
+  name "crop3_plant2"
+}
+Cypress {
+  translation 0 -6 0
+  name "crop3_plant3"
+}
+Cypress {
+  name "crop3_plant4"
+}
+Cypress {
+  translation 0 6 0
+  name "crop3_plant5"
+}
+Cypress {
+  translation 0 12 0
+  name "crop3_plant6"
+}
+Cypress {
+  translation 0 18 0
+  name "crop3_plant7"
+}
+DEF CROP_ROW_4 Solid {
+  translation 4 0 0.05
+  children [
+    Shape {
+      geometry Box {
+        size 1.2 42 0.1
+      }
+    }
+  ]
+  name "crop_row_4"
+  locked TRUE
+}
+Cypress {
+  translation 4 -18 0
+  name "crop4_plant1"
+}
+Cypress {
+  translation 4 -12 0
+  name "crop4_plant2"
+}
+Cypress {
+  translation 4 -6 0
+  name "crop4_plant3"
+}
+Cypress {
+  translation 4 0 0
+  name "crop4_plant4"
+}
+Cypress {
+  translation 4 6 0
+  name "crop4_plant5"
+}
+Cypress {
+  translation 4 12 0
+  name "crop4_plant6"
+}
+Cypress {
+  translation 4 18 0
+  name "crop4_plant7"
+}
+DEF CROP_ROW_5 Solid {
+  translation 8 0 0.05
+  children [
+    Shape {
+      geometry Box {
+        size 1.2 42 0.1
+      }
+    }
+  ]
+  name "crop_row_5"
+  locked TRUE
+}
+Cypress {
+  translation 8 -18 0
+  name "crop5_plant1"
+}
+Cypress {
+  translation 8 -12 0
+  name "crop5_plant2"
+}
+Cypress {
+  translation 8 -6 0
+  name "crop5_plant3"
+}
+Cypress {
+  translation 8 0 0
+  name "crop5_plant4"
+}
+Cypress {
+  translation 8 6 0
+  name "crop5_plant5"
+}
+Cypress {
+  translation 8 12 0
+  name "crop5_plant6"
+}
+Cypress {
+  translation 8 18 0
+  name "crop5_plant7"
+}
+Solid {
+  translation -6 -20 0.05
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
+  name "wp1"
+  locked TRUE
+}
+Solid {
+  translation -6 20 0.05
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
+  name "wp2"
+  locked TRUE
+}
+Solid {
+  translation -2 20 0.05
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
+  name "wp3"
+  locked TRUE
+}
+Solid {
+  translation -2 -20 0.05
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
+  name "wp4"
+  locked TRUE
+}
+Solid {
+  translation 2 -20 0.05
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
+  name "wp5"
+  locked TRUE
+}
+Solid {
+  translation 2 20 0.05
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
+  name "wp6"
+  locked TRUE
+}
+Solid {
+  translation 6 20 0.05
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
+  name "wp7"
+  locked TRUE
+}
+Solid {
+  translation 6 -20 0.05
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
+  name "wp8"
+  locked TRUE
+}
+CardboardBox {
+  translation 3.0178377193869355 7.207279574903316 0.34960759999268537
+  rotation -1.3389738478511857e-08 -1.392134288979769e-10 -1 0.03548699308137182
+  name "obstacle_1"
+  size 0.7 0.7 0.7
+  mass 2
+}
+CardboardBox {
+  translation -5.317682380855407 -21.5273292959541 0.2996076000000001
+  rotation 4.274816917194746e-16 -8.149875074679946e-18 1 0.8556233293205641
+  name "obstacle_2"
+  size 0.8 0.6 0.6
+  mass 2
+}
+CardboardBox {
+  translation 0.9999999999999994 -5 0.44960759999999994
+  rotation 0.044950971172605554 0.7196177508612426 -0.6929139216641892 1.0803747731884838e-16
+  name "obstacle_3"
+  size 0.5 0.5 0.9
+  mass 2
+}
+CardboardBox {
+  translation -3 15 0.3496075999999999
+  rotation 0.09093480846156983 -0.5226531950404778 0.8476818379109216 1.1803891340375849e-16
+  name "obstacle_4"
+  size 0.7 0.7 0.7
+  mass 2
+}
+DEF SHED_WALLS Solid {
+  translation 20 0 1.5
+  children [
+    Shape {
+      appearance BrushedAluminium {
+        textureTransform TextureTransform {
+          scale 3 2
+        }
+      }
+      geometry Box {
+        size 8 6 3
+      }
+    }
+  ]
+  name "shed_walls"
+  boundingObject Box {
+    size 8 6 3
+  }
+  locked TRUE
+}
+DEF SHED_ROOF Solid {
+  translation 20 0 3.3
+  children [
+    Shape {
+      appearance RustyMetal {
+        textureTransform TextureTransform {
+          scale 4 2
+        }
+      }
+      geometry Box {
+        size 8.4 6.4 0.4
+      }
+    }
+  ]
+  name "shed_roof"
+  locked TRUE
+}
+DEF SHED_DOOR Solid {
+  translation 16.01 0 0.9
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.3 0.3 0.3
+        roughness 0.6
+      }
+      geometry Box {
+        size 0.05 2 1.8
+      }
+    }
+  ]
+  name "shed_door"
+  locked TRUE
+}
+DEF FENCE_NORTH Solid {
+  translation 0 23 0.4
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.38 0.2
+        roughness 0.9
+      }
+      geometry Box {
+        size 50 0.1 0.8
+      }
+    }
+  ]
+  name "fence_north"
+  boundingObject Box {
+    size 50 0.1 0.8
+  }
+  locked TRUE
+}
+DEF FENCE_SOUTH Solid {
+  translation 0 -23 0.4
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.38 0.2
+        roughness 0.9
+      }
+      geometry Box {
+        size 50 0.1 0.8
+      }
+    }
+  ]
+  name "fence_south"
+  boundingObject Box {
+    size 50 0.1 0.8
+  }
+  locked TRUE
+}
+DEF FENCE_WEST Solid {
+  translation -23 0 0.4
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.38 0.2
+        roughness 0.9
+      }
+      geometry Box {
+        size 0.1 46 0.8
+      }
+    }
+  ]
+  name "fence_west"
+  boundingObject Box {
+    size 0.1 46 0.8
+  }
+  locked TRUE
+}
+DEF FENCE_EAST Solid {
+  translation 14 0 0.4
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.38 0.2
+        roughness 0.9
+      }
+      geometry Box {
+        size 0.1 46 0.8
+      }
+    }
+  ]
+  name "fence_east"
+  boundingObject Box {
+    size 0.1 46 0.8
+  }
+  locked TRUE
+}
+Sassafras {
+  translation -22 18 0
+  name "tree_nw1"
+}
+Sassafras {
+  translation -22 -18 0
+  name "tree_sw1"
+}
+Sassafras {
+  translation -18 22 0
+  name "tree_n1"
+}
+Sassafras {
+  translation -15 -22 0
+  name "tree_s1"
+}
+Oak {
+  translation -20 8 0
+  name "tree_w1"
+}
+Oak {
+  translation -20 -5 0
+  name "tree_w2"
+}
+Oak {
+  translation 12 20 0
+  name "tree_ne1"
+}
+Oak {
+  translation 12 -20 0
+  name "tree_se1"
+}
+Oak {
+  translation 12 0 0
+  name "tree_e1"
+}
+DEF WATER_TANK Solid {
+  translation -20 0 1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.1 0.3 0.7
+        roughness 0.3
+        metalness 0.5
+      }
+      geometry Cylinder {
+      }
+    }
+  ]
+  name "water_tank"
+  boundingObject Cylinder {
+  }
+  locked TRUE
+}
+Moose {
+  hidden position_0_0 1147.739228183489
+  hidden position_0_1 1097.1809169280564
+  hidden position_0_2 1031.489234064064
+  hidden position_0_3 945.1837840559161
+  hidden position_0_4 2306.907431765174
+  hidden position_0_5 2263.196811021428
+  hidden position_0_6 2059.824487536951
+  hidden position_0_7 1748.581945158692
+  hidden linearVelocity_0 0.02549671569161661 1.060962831747357 -0.007268190301072101
+  hidden angularVelocity_0 -0.0735449761124943 0.06480554579146063 -0.03772703967910106
+  hidden rotation_13 -0.9999999999999999 0 0 4.199502276804365
+  hidden linearVelocity_13 0.051778367018508326 1.1190800657138207 -0.1397763549551033
+  hidden angularVelocity_13 -3.090898624638383 0.06583404173325069 0.021518070381763416
+  hidden rotation_14 -0.9999999999999999 0 0 3.9066734788083295
+  hidden linearVelocity_14 0.006753167971707472 0.9269876637437582 -0.05322936548548672
+  hidden angularVelocity_14 -3.419858010895955 0.030315539673287314 -0.04729385215633909
+  hidden rotation_15 -1 0 0 1.0468436866118391
+  hidden linearVelocity_15 -0.029976374881377856 1.1296639427583117 -0.01564668438795873
+  hidden angularVelocity_15 -4.062807581476188 0.030309482413307536 -0.024733890733919146
+  hidden rotation_16 -0.9999999999999999 0 0 2.7059879789781633
+  hidden linearVelocity_16 -0.05958833148180842 1.0994029162375407 0.03107399503253245
+  hidden angularVelocity_16 -4.072153205397765 0.030544890672359954 -0.027233431272878923
+  hidden rotation_17 -1 0 0 5.304761276913927
+  hidden linearVelocity_17 0.03567939591039701 1.0961325222601848 -0.036637654010310446
+  hidden angularVelocity_17 -3.5180562928292924 0.03366359183483 -0.014664122264942863
+  hidden rotation_18 1 0 0 1.2501004367768163
+  hidden linearVelocity_18 0.00452736985190116 1.089928972902135 0.010342836093416762
+  hidden angularVelocity_18 -3.512737857989045 0.03461985483528588 -0.020494895744056656
+  hidden rotation_19 -1 0 0 1.060293217953382
+  hidden linearVelocity_19 -0.02708705934217385 1.0842127778548827 0.05786804068120182
+  hidden angularVelocity_19 -3.507864798842416 0.03560622204150649 -0.026381499732581803
+  hidden rotation_20 1 0 0 1.8564297627669106
+  hidden linearVelocity_20 -0.060033474087534705 1.0822694532298465 0.10402516403685902
+  hidden angularVelocity_20 -3.5064122980968366 0.037047328305619666 -0.032146259754836995
+  translation 3.0614305346938866 5.172712155359237 0.3052098438511034
+  rotation 0.0007505140663217164 -0.007732101001224379 -0.9999698252161128 -1.5805832015591648
+  name "AgroRover"
+  controller "agro_controller"
+  color 0.929412 0.2 0.231373
+  bodySlot [
+    GPS {
+      translation 0 0 0.35
+      accuracy 0.5
+      noiseCorrelation 0.1
+    }
+    Compass {
+      translation 0 0 0.3
+    }
+    InertialUnit {
+      translation 0 0 0.25
+      name "imu"
+      noise 0.005
+    }
+    Accelerometer {
+      translation 0 0 0.25
+    }
+    Gyro {
+      translation 0 0 0.25
+    }
+    Camera {
+      translation 0.55 0 0.28
+      fieldOfView 1.047
+      width 320
+      height 240
+      near 0.1
+      far 100
+    }
+    DistanceSensor {
+      translation 0.65 0 0.1
+      name "us_front"
+      lookupTable [
+        0 0 0
+        0.05 50 0.01
+        4 4000 0.1
+      ]
+      type "sonar"
+      numberOfRays 5
+      aperture 0.26
+    }
+    DistanceSensor {
+      translation -0.65 0 0.1
+      rotation 0 0 1 3.14159
+      name "us_rear"
+      lookupTable [
+        0 0 0
+        0.05 50 0.01
+        4 4000 0.1
+      ]
+      type "sonar"
+      numberOfRays 5
+      aperture 0.26
+    }
+    Solid {
+      translation 0.1 0 0.42
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.1
+            emissiveColor 0.3 0.28 0
+          }
+          geometry Box {
+            size 0.06 0.06 0.03
+          }
+        }
+      ]
+      name "gps_visual"
+    }
+    Solid {
+      translation 0.56 0 0.28
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.05 0.05 0.05
+            roughness 0.4
+          }
+          geometry Box {
+            size 0.04 0.07 0.05
+          }
+        }
+      ]
+      name "camera_housing"
+    }
+    Solid {
+      translation 0 0 0.3
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.15 0.15 0.15
+            roughness 0.4
+            metalness 0.5
+          }
+          geometry Box {
+            size 0.5 0.35 0.08
+          }
+        }
+      ]
+      name "electronics_box"
+    }
+    Solid {
+      translation 0 0 0.39
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.1 0.5 0.1
+            emissiveColor 0.02 0.1 0.02
+          }
+          geometry Box {
+            size 0.15 0.06 0.02
+          }
+        }
+      ]
+      name "label_plate"
+    }
+  ]
+}

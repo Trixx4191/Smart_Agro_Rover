@@ -1,0 +1,172 @@
+( { Proteus Netlist File — AgroRover Farm Rover }
+  { Generated for Proteus ARES PCB / ISIS Schematic }
+  { Import via: Design → Import Netlist }
+  { and also use as reference for manual wiring }
+
+  ( COMPONENTS
+    ( U1  ARDUINO_NANO )
+    ( U2  DS18B20 )
+    ( U3  DS18B20 )
+    ( U4  BME280 )
+    ( U5  HCSR04 )
+    ( U6  HCSR04 )
+    ( U7  L298N )
+    ( U8  LM393 )
+    ( U9  LM393 )
+    ( U10 LM2596-5V )
+    ( M1  MOTOR )
+    ( M2  MOTOR )
+    ( M3  MOTOR )
+    ( M4  MOTOR )
+    ( R1  RES )
+    ( C1  CAP )
+    ( C2  CAP-ELEC )
+    ( RV1 POT-HG )
+    ( RV2 POT-HG )
+    ( J1  CONN-SIL2 )
+  )
+
+  ( NETS
+    ( ONE_WIRE
+      ( U1  D2   )
+      ( U2  DQ   )
+      ( U3  DQ   )
+      ( R1  2    )
+    )
+    ( VCC
+      ( U1  5V   )
+      ( U2  VCC  )
+      ( U3  VCC  )
+      ( U4  VCC  )
+      ( U5  VCC  )
+      ( U6  VCC  )
+      ( U7  VS   )
+      ( U8  VCC  )
+      ( U9  VCC  )
+      ( U10 OUT+ )
+      ( R1  1    )
+      ( C1  1    )
+      ( C2  1    )
+      ( RV1 VCC  )
+      ( RV2 VCC  )
+    )
+    ( GND
+      ( U1  GND  )
+      ( U2  GND  )
+      ( U3  GND  )
+      ( U4  GND  )
+      ( U5  GND  )
+      ( U6  GND  )
+      ( U7  GND  )
+      ( U8  GND  )
+      ( U9  GND  )
+      ( U10 OUT- )
+      ( M1  -    )
+      ( M2  -    )
+      ( M3  -    )
+      ( M4  -    )
+      ( C1  2    )
+      ( C2  2    )
+      ( RV1 GND  )
+      ( RV2 GND  )
+      ( J1  2    )
+    )
+    ( SDA
+      ( U1  A4   )
+      ( U4  SDA  )
+    )
+    ( SCL
+      ( U1  A5   )
+      ( U4  SCL  )
+    )
+    ( US_F_TRIG
+      ( U1  D6   )
+      ( U5  TRIG )
+    )
+    ( US_F_ECHO
+      ( U1  D7   )
+      ( U5  ECHO )
+    )
+    ( US_R_TRIG
+      ( U1  D8   )
+      ( U6  TRIG )
+    )
+    ( US_R_ECHO
+      ( U1  D9   )
+      ( U6  ECHO )
+    )
+    ( MOISTURE_A0
+      ( U1  A0   )
+      ( RV1 W    )
+    )
+    ( MOISTURE_A1
+      ( U1  A1   )
+      ( RV2 W    )
+    )
+    ( MOTOR_IN1
+      ( U1  D4   )
+      ( U7  IN1  )
+    )
+    ( MOTOR_IN2
+      ( U1  D5   )
+      ( U7  IN2  )
+    )
+    ( MOTOR_ENA
+      ( U1  D10  )
+      ( U7  ENA  )
+    )
+    ( MOTOR_IN3
+      ( U1  D12  )
+      ( U7  IN3  )
+    )
+    ( MOTOR_IN4
+      ( U1  D13  )
+      ( U7  IN4  )
+    )
+    ( MOTOR_ENB
+      ( U1  A4   )
+      ( U7  ENB  )
+    )
+    ( MOT_L_A
+      ( U7  OUT1 )
+      ( M1  +    )
+      ( M2  +    )
+    )
+    ( MOT_L_B
+      ( U7  OUT2 )
+      ( M1  -    )
+      ( M2  -    )
+    )
+    ( MOT_R_A
+      ( U7  OUT3 )
+      ( M3  +    )
+      ( M4  +    )
+    )
+    ( MOT_R_B
+      ( U7  OUT4 )
+      ( M3  -    )
+      ( M4  -    )
+    )
+    ( ENC_LF
+      ( U1  D3   )
+      ( U8  OUT1 )
+    )
+    ( ENC_LR
+      ( U1  A2   )
+      ( U8  OUT2 )
+    )
+    ( ENC_RF
+      ( U1  A3   )
+      ( U9  OUT1 )
+    )
+    ( ENC_RR
+      ( U1  D11  )
+      ( U9  OUT2 )
+    )
+    ( VCC_12V
+      ( J1  1    )
+      ( U7  VSS  )
+      ( U10 IN+  )
+    )
+  )
+)

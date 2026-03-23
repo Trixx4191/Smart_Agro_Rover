@@ -1,0 +1,270 @@
+#VRML_SIM R2022b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/appearances/protos/SandyGround.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/robots/clearpath/moose/protos/Moose.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/trees/protos/Oak.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/trees/protos/Sassafras.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/factory/containers/protos/CardboardBox.proto"
+
+WorldInfo {
+  info [
+    "Autonomous Farm Rover Simulation"
+    "AgroRover - Arduino Nano + Raspberry Pi 4"
+    "GPS waypoint navigation with obstacle avoidance"
+    "Sensors: GPS, Compass, Ultrasonic x2"
+  ]
+  title "AgroRover Farm Simulation"
+  CFM 0.0003
+  ERP 0.4
+  basicTimeStep 16
+  defaultDamping Damping {
+  }
+  lineScale 0.2
+  contactProperties [
+    ContactProperties {
+      material1 "wheel"
+      material2 "moose wheel"
+      coulombFriction [ 4 ]
+      softCFM 1e-05
+      bumpSound ""
+      rollSound ""
+      slideSound ""
+    }
+  ]
+}
+
+Viewpoint {
+  orientation -0.3 0.1 0.95 2.5
+  position 5 -8 18
+  near 1
+  follow "AgroRover"
+}
+
+TexturedBackground {
+}
+
+TexturedBackgroundLight {
+  luminosity 0.9
+}
+
+DEF FARM_GROUND Solid {
+  translation -25 -25 -0.01
+  children [
+    Shape {
+      appearance SandyGround {
+        textureTransform TextureTransform {
+          scale 10 10
+        }
+      }
+      geometry DEF FARM_EG ElevationGrid {
+        height [
+          0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0 0 0
+        ]
+        xDimension 10
+        xSpacing 5
+        yDimension 10
+        ySpacing 5
+      }
+    }
+  ]
+  contactMaterial "floor"
+  boundingObject USE FARM_EG
+  locked TRUE
+}
+
+Solid {
+  translation -8 0.02 0
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.15 0.55 0.1 roughness 0.9 }
+      geometry Box { size 1 0.04 40 }
+    }
+  ]
+  name "crop_row_1"
+  locked TRUE
+}
+Solid {
+  translation -4 0.02 0
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.15 0.55 0.1 roughness 0.9 }
+      geometry Box { size 1 0.04 40 }
+    }
+  ]
+  name "crop_row_2"
+  locked TRUE
+}
+Solid {
+  translation 0 0.02 0
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.15 0.55 0.1 roughness 0.9 }
+      geometry Box { size 1 0.04 40 }
+    }
+  ]
+  name "crop_row_3"
+  locked TRUE
+}
+Solid {
+  translation 4 0.02 0
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.15 0.55 0.1 roughness 0.9 }
+      geometry Box { size 1 0.04 40 }
+    }
+  ]
+  name "crop_row_4"
+  locked TRUE
+}
+Solid {
+  translation 8 0.02 0
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.15 0.55 0.1 roughness 0.9 }
+      geometry Box { size 1 0.04 40 }
+    }
+  ]
+  name "crop_row_5"
+  locked TRUE
+}
+
+Solid {
+  translation -4.209318 0.05 9.147717
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 1 0.9 0 emissiveColor 0.5 0.45 0 }
+      geometry Cylinder { radius 0.2 height 0.1 }
+    }
+  ]
+  name "waypoint_1"
+  locked TRUE
+}
+Solid {
+  translation 0.946812 0.05 9.404304
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 1 0.9 0 emissiveColor 0.5 0.45 0 }
+      geometry Cylinder { radius 0.2 height 0.1 }
+    }
+  ]
+  name "waypoint_2"
+  locked TRUE
+}
+Solid {
+  translation 0.175989 0.05 -1.784311
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 1 0.9 0 emissiveColor 0.5 0.45 0 }
+      geometry Cylinder { radius 0.2 height 0.1 }
+    }
+  ]
+  name "waypoint_3"
+  locked TRUE
+}
+Solid {
+  translation -2.805353 0.05 -8.829694
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 1 0.9 0 emissiveColor 0.5 0.45 0 }
+      geometry Cylinder { radius 0.2 height 0.1 }
+    }
+  ]
+  name "waypoint_4"
+  locked TRUE
+}
+
+CardboardBox {
+  translation 2.5 0 4.5
+  name "obstacle_1"
+  size 0.8 0.8 0.8
+}
+CardboardBox {
+  translation -3.5 0 -5.2
+  name "obstacle_2"
+  size 0.8 0.8 0.8
+}
+CardboardBox {
+  translation 1.2 0 -2.8
+  name "obstacle_3"
+  size 0.6 0.6 0.6
+}
+
+Sassafras {
+  translation -14 0 8
+  name "tree_1"
+}
+Sassafras {
+  translation -12 0 -10
+  name "tree_2"
+}
+Oak {
+  translation 13 0 7
+  name "tree_3"
+}
+Oak {
+  translation 12 0 -9
+  name "tree_4"
+}
+
+DEF BACKGROUND_PLANE Solid {
+  children [
+    Shape {
+      appearance SandyGround {
+        textureTransform TextureTransform {
+          rotation 0.2
+          scale 200 200
+        }
+      }
+      geometry DEF BG_PLANE Plane {
+        size 2000 2000
+      }
+    }
+  ]
+  name "background_plane"
+  boundingObject USE BG_PLANE
+  locked TRUE
+}
+
+Moose {
+  translation -7 0 6
+  rotation 0 0 1 -1.5708
+  name "AgroRover"
+  controller "agro_controller"
+  bodySlot [
+    GPS {
+      name "gps"
+    }
+    Compass {
+      name "compass"
+    }
+    DistanceSensor {
+      translation 0.6 0 0
+      rotation 0 0 1 0
+      name "us_front"
+      lookupTable [ 0 0 0  0.1 100 0.02  3 3000 0.1 ]
+      type "sonar"
+      numberOfRays 5
+      aperture 0.3
+    }
+    DistanceSensor {
+      translation -0.6 0 0
+      rotation 0 0 1 3.14159
+      name "us_rear"
+      lookupTable [ 0 0 0  0.1 100 0.02  3 3000 0.1 ]
+      type "sonar"
+      numberOfRays 5
+      aperture 0.3
+    }
+  ]
+}

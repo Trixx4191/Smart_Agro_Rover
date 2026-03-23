@@ -1,0 +1,8 @@
+[window]
+title: AgroRover Farm Simulation
+size: 1280x720
+[background]
+color: 0.12 0.12 0.12
+[openGL]
+disableShadows: false
+disableAntiAliasing: false
