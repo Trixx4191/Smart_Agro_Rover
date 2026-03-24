@@ -1,4 +1,4 @@
-#VRML_SIM R2022b utf8
+#VRML_SIM R2025a utf8
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
@@ -38,28 +38,18 @@ WorldInfo {
     }
   ]
 }
-
 Viewpoint {
-  orientation -0.25 0.08 0.96 2.4
-  position 4 -10 20
+  orientation -0.32286735526568344 0.3010238147488992 0.8972966810691787 1.7482868240892375
+  position 2.5424880628843476 -36.93906979621498 37.329355206372796
   near 1
   follow "AgroRover"
 }
-
 TexturedBackground {
   texture "noon_cloudy_countryside"
 }
-
 TexturedBackgroundLight {
   texture "noon_cloudy_countryside"
-  luminosity 1.0
 }
-
-# ================================================================
-#  FARM TERRAIN — flat ElevationGrid with SandyGround appearance
-#  Coordinate system: X=East  Y=North  Z=Up
-#  Field: 50m x 50m centred at origin
-# ================================================================
 DEF FARM_GROUND Solid {
   translation -25 -25 -0.01
   children [
@@ -71,17 +61,7 @@ DEF FARM_GROUND Solid {
       }
       geometry DEF FARM_EG ElevationGrid {
         height [
-          0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0
-          0 0 0 0 0 0 0 0 0 0 0
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         ]
         xDimension 11
         xSpacing 5
@@ -94,10 +74,6 @@ DEF FARM_GROUND Solid {
   boundingObject USE FARM_EG
   locked TRUE
 }
-
-# ================================================================
-#  BACKGROUND PLANE (extends beyond arena)
-# ================================================================
 DEF BG_PLANE Solid {
   children [
     Shape {
@@ -116,220 +92,438 @@ DEF BG_PLANE Solid {
   boundingObject USE BG_GEO
   locked TRUE
 }
-
-# ================================================================
-#  CROP ROWS — 5 rows along Y axis, X = -8, -4, 0, 4, 8
-#  AgroRover surveys between rows at X = -6, -2, 2, 6
-# ================================================================
-
-# ── Row 1 at X=-8 ─────────────────────────────────────────────
 DEF CROP_ROW_1 Solid {
   translation -8 0 0.05
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.18 0.52 0.1 roughness 0.9 }
-      geometry Box { size 1.2 42 0.1 }
+      appearance PBRAppearance {
+        baseColor 0.18 0.52 0.1
+        roughness 0.9
+      }
+      geometry Box {
+        size 1.2 42 0.1
+      }
     }
   ]
   name "crop_row_1"
   locked TRUE
 }
-Cypress { translation -8 -18 0  name "crop1_plant1" }
-Cypress { translation -8 -12 0  name "crop1_plant2" }
-Cypress { translation -8  -6 0  name "crop1_plant3" }
-Cypress { translation -8   0 0  name "crop1_plant4" }
-Cypress { translation -8   6 0  name "crop1_plant5" }
-Cypress { translation -8  12 0  name "crop1_plant6" }
-Cypress { translation -8  18 0  name "crop1_plant7" }
-
-# ── Row 2 at X=-4 ─────────────────────────────────────────────
+Cypress {
+  translation -8 -18 0
+  name "crop1_plant1"
+}
+Cypress {
+  translation -8 -12 0
+  name "crop1_plant2"
+}
+Cypress {
+  translation -8 -6 0
+  name "crop1_plant3"
+}
+Cypress {
+  translation -8 0 0
+  name "crop1_plant4"
+}
+Cypress {
+  translation -8 6 0
+  name "crop1_plant5"
+}
+Cypress {
+  translation -8 12 0
+  name "crop1_plant6"
+}
+Cypress {
+  translation -8 18 0
+  name "crop1_plant7"
+}
 DEF CROP_ROW_2 Solid {
   translation -4 0 0.05
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.18 0.52 0.1 roughness 0.9 }
-      geometry Box { size 1.2 42 0.1 }
+      appearance PBRAppearance {
+        baseColor 0.18 0.52 0.1
+        roughness 0.9
+      }
+      geometry Box {
+        size 1.2 42 0.1
+      }
     }
   ]
   name "crop_row_2"
   locked TRUE
 }
-Cypress { translation -4 -18 0  name "crop2_plant1" }
-Cypress { translation -4 -12 0  name "crop2_plant2" }
-Cypress { translation -4  -6 0  name "crop2_plant3" }
-Cypress { translation -4   0 0  name "crop2_plant4" }
-Cypress { translation -4   6 0  name "crop2_plant5" }
-Cypress { translation -4  12 0  name "crop2_plant6" }
-Cypress { translation -4  18 0  name "crop2_plant7" }
-
-# ── Row 3 at X=0 ──────────────────────────────────────────────
+Cypress {
+  translation -4 -18 0
+  name "crop2_plant1"
+}
+Cypress {
+  translation -4 -12 0
+  name "crop2_plant2"
+}
+Cypress {
+  translation -4 -6 0
+  name "crop2_plant3"
+}
+Cypress {
+  translation -4 0 0
+  name "crop2_plant4"
+}
+Cypress {
+  translation -4 6 0
+  name "crop2_plant5"
+}
+Cypress {
+  translation -4 12 0
+  name "crop2_plant6"
+}
+Cypress {
+  translation -4 18 0
+  name "crop2_plant7"
+}
 DEF CROP_ROW_3 Solid {
   translation 0 0 0.05
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.18 0.52 0.1 roughness 0.9 }
-      geometry Box { size 1.2 42 0.1 }
+      appearance PBRAppearance {
+        baseColor 0.18 0.52 0.1
+        roughness 0.9
+      }
+      geometry Box {
+        size 1.2 42 0.1
+      }
     }
   ]
   name "crop_row_3"
   locked TRUE
 }
-Cypress { translation 0 -18 0  name "crop3_plant1" }
-Cypress { translation 0 -12 0  name "crop3_plant2" }
-Cypress { translation 0  -6 0  name "crop3_plant3" }
-Cypress { translation 0   0 0  name "crop3_plant4" }
-Cypress { translation 0   6 0  name "crop3_plant5" }
-Cypress { translation 0  12 0  name "crop3_plant6" }
-Cypress { translation 0  18 0  name "crop3_plant7" }
-
-# ── Row 4 at X=4 ──────────────────────────────────────────────
+Cypress {
+  translation 0 -18 0
+  name "crop3_plant1"
+}
+Cypress {
+  translation 0 -12 0
+  name "crop3_plant2"
+}
+Cypress {
+  translation 0 -6 0
+  name "crop3_plant3"
+}
+Cypress {
+  name "crop3_plant4"
+}
+Cypress {
+  translation 0 6 0
+  name "crop3_plant5"
+}
+Cypress {
+  translation 0 12 0
+  name "crop3_plant6"
+}
+Cypress {
+  translation 0 18 0
+  name "crop3_plant7"
+}
 DEF CROP_ROW_4 Solid {
   translation 4 0 0.05
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.18 0.52 0.1 roughness 0.9 }
-      geometry Box { size 1.2 42 0.1 }
+      appearance PBRAppearance {
+        baseColor 0.18 0.52 0.1
+        roughness 0.9
+      }
+      geometry Box {
+        size 1.2 42 0.1
+      }
     }
   ]
   name "crop_row_4"
   locked TRUE
 }
-Cypress { translation 4 -18 0  name "crop4_plant1" }
-Cypress { translation 4 -12 0  name "crop4_plant2" }
-Cypress { translation 4  -6 0  name "crop4_plant3" }
-Cypress { translation 4   0 0  name "crop4_plant4" }
-Cypress { translation 4   6 0  name "crop4_plant5" }
-Cypress { translation 4  12 0  name "crop4_plant6" }
-Cypress { translation 4  18 0  name "crop4_plant7" }
-
-# ── Row 5 at X=8 ──────────────────────────────────────────────
+Cypress {
+  translation 4 -18 0
+  name "crop4_plant1"
+}
+Cypress {
+  translation 4 -12 0
+  name "crop4_plant2"
+}
+Cypress {
+  translation 4 -6 0
+  name "crop4_plant3"
+}
+Cypress {
+  translation 4 0 0
+  name "crop4_plant4"
+}
+Cypress {
+  translation 4 6 0
+  name "crop4_plant5"
+}
+Cypress {
+  translation 4 12 0
+  name "crop4_plant6"
+}
+Cypress {
+  translation 4 18 0
+  name "crop4_plant7"
+}
 DEF CROP_ROW_5 Solid {
   translation 8 0 0.05
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.18 0.52 0.1 roughness 0.9 }
-      geometry Box { size 1.2 42 0.1 }
+      appearance PBRAppearance {
+        baseColor 0.18 0.52 0.1
+        roughness 0.9
+      }
+      geometry Box {
+        size 1.2 42 0.1
+      }
     }
   ]
   name "crop_row_5"
   locked TRUE
 }
-Cypress { translation 8 -18 0  name "crop5_plant1" }
-Cypress { translation 8 -12 0  name "crop5_plant2" }
-Cypress { translation 8  -6 0  name "crop5_plant3" }
-Cypress { translation 8   0 0  name "crop5_plant4" }
-Cypress { translation 8   6 0  name "crop5_plant5" }
-Cypress { translation 8  12 0  name "crop5_plant6" }
-Cypress { translation 8  18 0  name "crop5_plant7" }
-
-# ================================================================
-#  SURVEY WAYPOINTS — boustrophedon pattern (yellow cylinders)
-#  Rover travels between crop rows: X = -6, -2, 2, 6
-# ================================================================
+Cypress {
+  translation 8 -18 0
+  name "crop5_plant1"
+}
+Cypress {
+  translation 8 -12 0
+  name "crop5_plant2"
+}
+Cypress {
+  translation 8 -6 0
+  name "crop5_plant3"
+}
+Cypress {
+  translation 8 0 0
+  name "crop5_plant4"
+}
+Cypress {
+  translation 8 6 0
+  name "crop5_plant5"
+}
+Cypress {
+  translation 8 12 0
+  name "crop5_plant6"
+}
+Cypress {
+  translation 8 18 0
+  name "crop5_plant7"
+}
 Solid {
   translation -6 -20 0.05
-  children [ Shape { appearance PBRAppearance { baseColor 1 0.85 0 emissiveColor 0.6 0.5 0 } geometry Cylinder { radius 0.25 height 0.1 } } ]
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
   name "wp1"
   locked TRUE
 }
 Solid {
   translation -6 20 0.05
-  children [ Shape { appearance PBRAppearance { baseColor 1 0.85 0 emissiveColor 0.6 0.5 0 } geometry Cylinder { radius 0.25 height 0.1 } } ]
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
   name "wp2"
   locked TRUE
 }
 Solid {
   translation -2 20 0.05
-  children [ Shape { appearance PBRAppearance { baseColor 1 0.85 0 emissiveColor 0.6 0.5 0 } geometry Cylinder { radius 0.25 height 0.1 } } ]
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
   name "wp3"
   locked TRUE
 }
 Solid {
   translation -2 -20 0.05
-  children [ Shape { appearance PBRAppearance { baseColor 1 0.85 0 emissiveColor 0.6 0.5 0 } geometry Cylinder { radius 0.25 height 0.1 } } ]
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
   name "wp4"
   locked TRUE
 }
 Solid {
   translation 2 -20 0.05
-  children [ Shape { appearance PBRAppearance { baseColor 1 0.85 0 emissiveColor 0.6 0.5 0 } geometry Cylinder { radius 0.25 height 0.1 } } ]
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
   name "wp5"
   locked TRUE
 }
 Solid {
   translation 2 20 0.05
-  children [ Shape { appearance PBRAppearance { baseColor 1 0.85 0 emissiveColor 0.6 0.5 0 } geometry Cylinder { radius 0.25 height 0.1 } } ]
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
   name "wp6"
   locked TRUE
 }
 Solid {
   translation 6 20 0.05
-  children [ Shape { appearance PBRAppearance { baseColor 1 0.85 0 emissiveColor 0.6 0.5 0 } geometry Cylinder { radius 0.25 height 0.1 } } ]
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
   name "wp7"
   locked TRUE
 }
 Solid {
   translation 6 -20 0.05
-  children [ Shape { appearance PBRAppearance { baseColor 1 0.85 0 emissiveColor 0.6 0.5 0 } geometry Cylinder { radius 0.25 height 0.1 } } ]
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0
+        emissiveColor 0.6 0.5 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.25
+      }
+    }
+  ]
   name "wp8"
   locked TRUE
 }
 Solid {
   translation 0 0 0.05
-  children [ Shape { appearance PBRAppearance { baseColor 1 0.4 0 emissiveColor 0.5 0.2 0 } geometry Cylinder { radius 0.3 height 0.1 } } ]
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.4 0
+        emissiveColor 0.5 0.2 0
+      }
+      geometry Cylinder {
+        height 0.1
+        radius 0.3
+      }
+    }
+  ]
   name "wp9_home"
   locked TRUE
 }
-
-# ================================================================
-#  OBSTACLES — CardboardBox scattered in field
-# ================================================================
 CardboardBox {
-  translation 3 7 0
+  translation 3 7 0.34960759956574866
+  rotation 0.5955641409432755 0.8027864437274782 -0.02893578735557288 5.616600053616072e-17
   name "obstacle_1"
   size 0.7 0.7 0.7
   mass 2
 }
 CardboardBox {
-  translation -5 -11 0
+  translation -2.2973103561808084 22.627911137760105 0.2996076000731658
+  rotation -2.905944478696155e-09 5.080417428192802e-09 1 0.04207160986157443
   name "obstacle_2"
   size 0.8 0.6 0.6
   mass 2
 }
 CardboardBox {
-  translation 1 -5 0
+  translation 0.9999999999999994 -5 0.449607599911947
+  rotation 0.17156410780643042 0.7163432629476433 -0.6763269080423364 1.0829245422505368e-16
   name "obstacle_3"
   size 0.5 0.5 0.9
   mass 2
 }
 CardboardBox {
-  translation -3 15 0
+  translation -3 15 0.34960759956574866
+  rotation 0.2806836357655866 -0.2790458308455315 0.9183409611365152 1.1936645010664707e-16
   name "obstacle_4"
   size 0.7 0.7 0.7
   mass 2
 }
-
-# ================================================================
-#  FARM STORAGE BUILDING — corrugated metal shed
-# ================================================================
 DEF SHED_WALLS Solid {
   translation 20 0 1.5
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.75 0.75 0.78 roughness 0.3 metalness 0.9 }
-      geometry Box { size 8 6 3 }
+      appearance PBRAppearance {
+        baseColor 0.75 0.75 0.78
+        roughness 0.3
+        metalness 0.9
+      }
+      geometry Box {
+        size 8 6 3
+      }
     }
   ]
   name "shed_walls"
-  boundingObject Box { size 8 6 3 }
+  boundingObject Box {
+    size 8 6 3
+  }
   locked TRUE
 }
 DEF SHED_ROOF Solid {
   translation 20 0 3.3
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.55 0.3 0.2 roughness 0.95 metalness 0.4 }
-      geometry Box { size 8.4 6.4 0.4 }
+      appearance PBRAppearance {
+        baseColor 0.55 0.3 0.2
+        roughness 0.95
+        metalness 0.4
+      }
+      geometry Box {
+        size 8.4 6.4 0.4
+      }
     }
   ]
   name "shed_roof"
@@ -339,236 +533,300 @@ DEF SHED_DOOR Solid {
   translation 16.01 0 0.9
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.3 0.3 0.3 roughness 0.6 }
-      geometry Box { size 0.05 2 1.8 }
+      appearance PBRAppearance {
+        baseColor 0.3 0.3 0.3
+        roughness 0.6
+      }
+      geometry Box {
+        size 0.05 2 1.8
+      }
     }
   ]
   name "shed_door"
   locked TRUE
 }
-
-# ================================================================
-#  FIELD BOUNDARY FENCE
-# ================================================================
 DEF FENCE_NORTH Solid {
   translation 0 23 0.4
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.55 0.38 0.2 roughness 0.9 }
-      geometry Box { size 50 0.1 0.8 }
+      appearance PBRAppearance {
+        baseColor 0.55 0.38 0.2
+        roughness 0.9
+      }
+      geometry Box {
+        size 50 0.1 0.8
+      }
     }
   ]
   name "fence_north"
-  boundingObject Box { size 50 0.1 0.8 }
+  boundingObject Box {
+    size 50 0.1 0.8
+  }
   locked TRUE
 }
 DEF FENCE_SOUTH Solid {
   translation 0 -23 0.4
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.55 0.38 0.2 roughness 0.9 }
-      geometry Box { size 50 0.1 0.8 }
+      appearance PBRAppearance {
+        baseColor 0.55 0.38 0.2
+        roughness 0.9
+      }
+      geometry Box {
+        size 50 0.1 0.8
+      }
     }
   ]
   name "fence_south"
-  boundingObject Box { size 50 0.1 0.8 }
+  boundingObject Box {
+    size 50 0.1 0.8
+  }
   locked TRUE
 }
 DEF FENCE_WEST Solid {
   translation -23 0 0.4
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.55 0.38 0.2 roughness 0.9 }
-      geometry Box { size 0.1 46 0.8 }
+      appearance PBRAppearance {
+        baseColor 0.55 0.38 0.2
+        roughness 0.9
+      }
+      geometry Box {
+        size 0.1 46 0.8
+      }
     }
   ]
   name "fence_west"
-  boundingObject Box { size 0.1 46 0.8 }
+  boundingObject Box {
+    size 0.1 46 0.8
+  }
   locked TRUE
 }
 DEF FENCE_EAST Solid {
   translation 14 0 0.4
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.55 0.38 0.2 roughness 0.9 }
-      geometry Box { size 0.1 46 0.8 }
+      appearance PBRAppearance {
+        baseColor 0.55 0.38 0.2
+        roughness 0.9
+      }
+      geometry Box {
+        size 0.1 46 0.8
+      }
     }
   ]
   name "fence_east"
-  boundingObject Box { size 0.1 46 0.8 }
+  boundingObject Box {
+    size 0.1 46 0.8
+  }
   locked TRUE
 }
-
-# ================================================================
-#  BOUNDARY TREES
-# ================================================================
-Sassafras { translation -22 18 0   name "tree_nw1" }
-Sassafras { translation -22 -18 0  name "tree_sw1" }
-Sassafras { translation -18 22 0   name "tree_n1"  }
-Sassafras { translation -15 -22 0  name "tree_s1"  }
-Oak { translation -20 8 0   name "tree_w1" }
-Oak { translation -20 -5 0  name "tree_w2" }
-Oak { translation  12 20 0  name "tree_ne1" }
-Oak { translation  12 -20 0 name "tree_se1" }
-Oak { translation  12  0 0  name "tree_e1"  }
-
-# ================================================================
-#  WATER TANK (irrigation reference point)
-# ================================================================
+Sassafras {
+  translation -22 18 0
+  name "tree_nw1"
+}
+Sassafras {
+  translation -22 -18 0
+  name "tree_sw1"
+}
+Sassafras {
+  translation -18 22 0
+  name "tree_n1"
+}
+Sassafras {
+  translation -15 -22 0
+  name "tree_s1"
+}
+Oak {
+  translation -20 8 0
+  name "tree_w1"
+}
+Oak {
+  translation -20 -5 0
+  name "tree_w2"
+}
+Oak {
+  translation 12 20 0
+  name "tree_ne1"
+}
+Oak {
+  translation 12 -20 0
+  name "tree_se1"
+}
+Oak {
+  translation 12 0 0
+  name "tree_e1"
+}
 DEF WATER_TANK Solid {
-  translation -20 0 1.0
+  translation -20 0 1
   children [
     Shape {
-      appearance PBRAppearance { baseColor 0.1 0.3 0.7 roughness 0.3 metalness 0.5 }
-      geometry Cylinder { radius 1.0 height 2.0 }
+      appearance PBRAppearance {
+        baseColor 0.1 0.3 0.7
+        roughness 0.3
+        metalness 0.5
+      }
+      geometry Cylinder {
+      }
     }
   ]
   name "water_tank"
-  boundingObject Cylinder { radius 1.0 height 2.0 }
+  boundingObject Cylinder {
+  }
   locked TRUE
 }
-
-# ================================================================
-#  AGROROVER ROBOT — Modified Clearpath Moose
-#  Added sensors: Camera, InertialUnit, Accelerometer, Gyro
-#  Plus existing: GPS, Compass, DistanceSensor x2
-#  Body slot positions: X=forward, Y=left, Z=up (robot local frame)
-# ================================================================
 Moose {
-  translation -6 -20 0
-  rotation 0 0 1 1.5708
+  hidden position_0_0 273.6503772481774
+  hidden position_0_1 268.19653211789847
+  hidden position_0_2 239.15025220661852
+  hidden position_0_3 208.13283810540733
+  hidden position_0_4 564.9879205720961
+  hidden position_0_5 562.1391415795766
+  hidden position_0_6 516.5592194272817
+  hidden position_0_7 399.6544242068866
+  hidden linearVelocity_0 -0.021125289044356736 -0.8988195763324537 0.011410740344390786
+  hidden angularVelocity_0 -0.22197658266562273 -0.02463269582370879 0.1347103454046001
+  hidden rotation_13 1 0 0 2.8097762677244127
+  hidden linearVelocity_13 0.016756973949291296 -0.9422184194159414 0.2072202954334429
+  hidden angularVelocity_13 4.64689831742209 0.06475077594380013 0.1333067995046634
+  hidden rotation_14 -0.9999999999999999 0 0 4.3027492163558385
+  hidden linearVelocity_14 -0.0057428367203867054 -1.0076738803982488 0.06485867816983276
+  hidden angularVelocity_14 4.537344352639721 0.04051771442583886 0.12736381222733686
+  hidden rotation_15 -1 0 0 0.3892105337942321
+  hidden linearVelocity_15 0.035983924969595425 -1.0993686254182826 -0.07663235369087736
+  hidden angularVelocity_15 4.4165179466573115 0.0019921210898652983 0.10283207266981782
+  hidden rotation_16 1 0 0 5.4954623386986095
+  hidden linearVelocity_16 0.004540577605499375 -1.060802065754258 -0.21987335993511714
+  hidden angularVelocity_16 4.0303064891321645 -0.023099535464134843 0.09819436473148356
+  hidden rotation_17 -1 0 0 0.49875707406671055
+  hidden linearVelocity_17 -0.010069178765473323 -0.726546520503231 0.2352527708647761
+  hidden angularVelocity_17 4.6366582745756935 0.06779434781629917 0.1393949158991836
+  hidden rotation_18 -0.9999999999999999 0 0 3.3475360665861524
+  hidden linearVelocity_18 -0.04517958296456422 -0.8129574148430653 0.09061032270256929
+  hidden angularVelocity_18 4.529608113839824 0.048923482153588715 0.14064839546204383
+  hidden rotation_19 1 0 0 1.3380242385556411
+  hidden linearVelocity_19 0.011889633195272017 -0.9047319957646972 -0.050938740757791236
+  hidden angularVelocity_19 4.409047838905613 0.007458511617517881 0.10978740182134865
+  hidden rotation_20 -1 0 0 2.46943545260696
+  hidden linearVelocity_20 0.004287727095523227 -0.8712125572952376 -0.19390433600895118
+  hidden angularVelocity_20 3.4365302040344723 -0.031037660627652796 0.10130868928428545
+  translation -0.5737472506876601 8.144979525441634 0.3217955350084074
+  rotation -0.019193229707594267 -0.016565207793061074 -0.9996785552487182 1.5580721142424088
   name "AgroRover"
   controller "agro_controller"
   bodySlot [
-
-    # ── GPS (NEO-6M equivalent) ──────────────────────────────
     GPS {
       translation 0 0 0.35
-      name "gps"
       accuracy 0.5
       noiseCorrelation 0.1
     }
-
-    # ── Compass / Magnetometer ───────────────────────────────
     Compass {
       translation 0 0 0.3
-      name "compass"
     }
-
-    # ── IMU — InertialUnit (MPU-6050 equivalent) ─────────────
     InertialUnit {
       translation 0 0 0.25
       name "imu"
       noise 0.005
     }
-
-    # ── Accelerometer ────────────────────────────────────────
     Accelerometer {
       translation 0 0 0.25
-      name "accelerometer"
-      xAxis TRUE
-      yAxis TRUE
-      zAxis TRUE
     }
-
-    # ── Gyroscope ────────────────────────────────────────────
     Gyro {
       translation 0 0 0.25
-      name "gyro"
-      xAxis TRUE
-      yAxis TRUE
-      zAxis TRUE
     }
-
-    # ── Pi Camera (front-facing, 320x240) ─────────────────────
     Camera {
       translation 0.55 0 0.28
-      rotation 0 0 1 0
-      name "camera"
+      fieldOfView 1.047
       width 320
       height 240
-      fieldOfView 1.047
       near 0.1
       far 100
     }
-
-    # ── HC-SR04 FRONT ultrasonic ──────────────────────────────
     DistanceSensor {
       translation 0.65 0 0.1
-      rotation 0 0 1 0
       name "us_front"
       lookupTable [
-        0    0    0
-        0.05 50   0.01
-        4.0  4000 0.1
+        0 0 0
+        0.05 50 0.01
+        4 4000 0.1
       ]
       type "sonar"
       numberOfRays 5
       aperture 0.26
     }
-
-    # ── HC-SR04 REAR ultrasonic ───────────────────────────────
     DistanceSensor {
       translation -0.65 0 0.1
       rotation 0 0 1 3.14159
       name "us_rear"
       lookupTable [
-        0    0    0
-        0.05 50   0.01
-        4.0  4000 0.1
+        0 0 0
+        0.05 50 0.01
+        4 4000 0.1
       ]
       type "sonar"
       numberOfRays 5
       aperture 0.26
     }
-
-    # ── Visual: GPS antenna (yellow box on top) ───────────────
     Solid {
       translation 0.1 0 0.42
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.1 emissiveColor 0.3 0.28 0 }
-          geometry Box { size 0.06 0.06 0.03 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.1
+            emissiveColor 0.3 0.28 0
+          }
+          geometry Box {
+            size 0.06 0.06 0.03
+          }
         }
       ]
       name "gps_visual"
     }
-
-    # ── Visual: Camera housing (black box front) ──────────────
     Solid {
       translation 0.56 0 0.28
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.05 0.05 0.05 roughness 0.4 }
-          geometry Box { size 0.04 0.07 0.05 }
+          appearance PBRAppearance {
+            baseColor 0.05 0.05 0.05
+            roughness 0.4
+          }
+          geometry Box {
+            size 0.04 0.07 0.05
+          }
         }
       ]
       name "camera_housing"
     }
-
-    # ── Visual: Electronics box (dark grey top) ───────────────
     Solid {
       translation 0 0 0.3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.15 0.15 0.15 roughness 0.4 metalness 0.5 }
-          geometry Box { size 0.5 0.35 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.15 0.15 0.15
+            roughness 0.4
+            metalness 0.5
+          }
+          geometry Box {
+            size 0.5 0.35 0.08
+          }
         }
       ]
       name "electronics_box"
     }
-
-    # ── Visual: AgroRover label plate (green) ─────────────────
     Solid {
       translation 0 0 0.39
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.1 0.5 0.1 emissiveColor 0.02 0.1 0.02 }
-          geometry Box { size 0.15 0.06 0.02 }
+          appearance PBRAppearance {
+            baseColor 0.1 0.5 0.1
+            emissiveColor 0.02 0.1 0.02
+          }
+          geometry Box {
+            size 0.15 0.06 0.02
+          }
         }
       ]
       name "label_plate"
     }
-
   ]
 }

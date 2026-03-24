@@ -52,7 +52,7 @@ TARGETS = [
     ( 2.0,  20.0),    # WP6  Row-C north end
     ( 6.0,  20.0),    # WP7  Row-D north end
     ( 6.0, -20.0),    # WP8  Row-D south end
-    ( 0.0,   0.0),    # WP9  Return to centre / home
+    ( 0.0,    0.0),    # WP9  Return to centre / home
 ]
 
 WP_NAMES = [
