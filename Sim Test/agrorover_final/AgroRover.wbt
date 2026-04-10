@@ -7,7 +7,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/trees/protos/Oak.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/trees/protos/Sassafras.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/trees/protos/Cypress.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2022b/projects/objects/factory/containers/protos/CardboardBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/plants/protos/PottedTree.proto"
 
 WorldInfo {
   info [
@@ -21,6 +21,7 @@ WorldInfo {
   CFM 0.0003
   ERP 0.4
   basicTimeStep 16
+  FPS 120
   defaultDamping Damping {
   }
   lineScale 0.2
@@ -39,8 +40,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.32286735526568344 0.3010238147488992 0.8972966810691787 1.7482868240892375
-  position 2.5424880628843476 -36.93906979621498 37.329355206372796
+  orientation -0.22790424586377847 0.21248625701706433 0.950215367848858 1.6916285833778866
+  position -9.496344991611812 -78.68797612445822 47.44230362040222
   near 1
   follow "AgroRover"
 }
@@ -101,7 +102,7 @@ DEF CROP_ROW_1 Solid {
         roughness 0.9
       }
       geometry Box {
-        size 1.2 42 0.1
+        size 1.2 40 0.1
       }
     }
   ]
@@ -145,7 +146,7 @@ DEF CROP_ROW_2 Solid {
         roughness 0.9
       }
       geometry Box {
-        size 1.2 42 0.1
+        size 1.2 40 0.1
       }
     }
   ]
@@ -189,7 +190,7 @@ DEF CROP_ROW_3 Solid {
         roughness 0.9
       }
       geometry Box {
-        size 1.2 42 0.1
+        size 1.2 40 0.1
       }
     }
   ]
@@ -207,9 +208,6 @@ Cypress {
 Cypress {
   translation 0 -6 0
   name "crop3_plant3"
-}
-Cypress {
-  name "crop3_plant4"
 }
 Cypress {
   translation 0 6 0
@@ -232,7 +230,7 @@ DEF CROP_ROW_4 Solid {
         roughness 0.9
       }
       geometry Box {
-        size 1.2 42 0.1
+        size 1.2 40 0.1
       }
     }
   ]
@@ -263,6 +261,8 @@ Cypress {
   translation 4 12 0
   name "crop4_plant6"
 }
+PottedTree {
+}
 Cypress {
   translation 4 18 0
   name "crop4_plant7"
@@ -276,7 +276,7 @@ DEF CROP_ROW_5 Solid {
         roughness 0.9
       }
       geometry Box {
-        size 1.2 42 0.1
+        size 1.2 40 0.1
       }
     }
   ]
@@ -312,7 +312,7 @@ Cypress {
   name "crop5_plant7"
 }
 Solid {
-  translation -6 -20 0.05
+  translation -6 -19 0.05
   children [
     Shape {
       appearance PBRAppearance {
@@ -329,7 +329,7 @@ Solid {
   locked TRUE
 }
 Solid {
-  translation -6 20 0.05
+  translation -6 19 0.05
   children [
     Shape {
       appearance PBRAppearance {
@@ -346,7 +346,7 @@ Solid {
   locked TRUE
 }
 Solid {
-  translation -2 20 0.05
+  translation -2 19 0.05
   children [
     Shape {
       appearance PBRAppearance {
@@ -363,7 +363,7 @@ Solid {
   locked TRUE
 }
 Solid {
-  translation -2 -20 0.05
+  translation -2 -19 0.05
   children [
     Shape {
       appearance PBRAppearance {
@@ -380,7 +380,7 @@ Solid {
   locked TRUE
 }
 Solid {
-  translation 2 -20 0.05
+  translation 2 -19 0.05
   children [
     Shape {
       appearance PBRAppearance {
@@ -397,7 +397,7 @@ Solid {
   locked TRUE
 }
 Solid {
-  translation 2 20 0.05
+  translation 2 19 0.05
   children [
     Shape {
       appearance PBRAppearance {
@@ -414,7 +414,7 @@ Solid {
   locked TRUE
 }
 Solid {
-  translation 6 20 0.05
+  translation 6 19 0.05
   children [
     Shape {
       appearance PBRAppearance {
@@ -431,7 +431,7 @@ Solid {
   locked TRUE
 }
 Solid {
-  translation 6 -20 0.05
+  translation 6 -19 0.05
   children [
     Shape {
       appearance PBRAppearance {
@@ -446,51 +446,6 @@ Solid {
   ]
   name "wp8"
   locked TRUE
-}
-Solid {
-  translation 0 0 0.05
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 1 0.4 0
-        emissiveColor 0.5 0.2 0
-      }
-      geometry Cylinder {
-        height 0.1
-        radius 0.3
-      }
-    }
-  ]
-  name "wp9_home"
-  locked TRUE
-}
-CardboardBox {
-  translation 3 7 0.34960759956574866
-  rotation 0.5955641409432755 0.8027864437274782 -0.02893578735557288 5.616600053616072e-17
-  name "obstacle_1"
-  size 0.7 0.7 0.7
-  mass 2
-}
-CardboardBox {
-  translation -2.2973103561808084 22.627911137760105 0.2996076000731658
-  rotation -2.905944478696155e-09 5.080417428192802e-09 1 0.04207160986157443
-  name "obstacle_2"
-  size 0.8 0.6 0.6
-  mass 2
-}
-CardboardBox {
-  translation 0.9999999999999994 -5 0.449607599911947
-  rotation 0.17156410780643042 0.7163432629476433 -0.6763269080423364 1.0829245422505368e-16
-  name "obstacle_3"
-  size 0.5 0.5 0.9
-  mass 2
-}
-CardboardBox {
-  translation -3 15 0.34960759956574866
-  rotation 0.2806836357655866 -0.2790458308455315 0.9183409611365152 1.1936645010664707e-16
-  name "obstacle_4"
-  size 0.7 0.7 0.7
-  mass 2
 }
 DEF SHED_WALLS Solid {
   translation 20 0 1.5
@@ -676,44 +631,45 @@ DEF WATER_TANK Solid {
   locked TRUE
 }
 Moose {
-  hidden position_0_0 273.6503772481774
-  hidden position_0_1 268.19653211789847
-  hidden position_0_2 239.15025220661852
-  hidden position_0_3 208.13283810540733
-  hidden position_0_4 564.9879205720961
-  hidden position_0_5 562.1391415795766
-  hidden position_0_6 516.5592194272817
-  hidden position_0_7 399.6544242068866
-  hidden linearVelocity_0 -0.021125289044356736 -0.8988195763324537 0.011410740344390786
-  hidden angularVelocity_0 -0.22197658266562273 -0.02463269582370879 0.1347103454046001
-  hidden rotation_13 1 0 0 2.8097762677244127
-  hidden linearVelocity_13 0.016756973949291296 -0.9422184194159414 0.2072202954334429
-  hidden angularVelocity_13 4.64689831742209 0.06475077594380013 0.1333067995046634
-  hidden rotation_14 -0.9999999999999999 0 0 4.3027492163558385
-  hidden linearVelocity_14 -0.0057428367203867054 -1.0076738803982488 0.06485867816983276
-  hidden angularVelocity_14 4.537344352639721 0.04051771442583886 0.12736381222733686
-  hidden rotation_15 -1 0 0 0.3892105337942321
-  hidden linearVelocity_15 0.035983924969595425 -1.0993686254182826 -0.07663235369087736
-  hidden angularVelocity_15 4.4165179466573115 0.0019921210898652983 0.10283207266981782
-  hidden rotation_16 1 0 0 5.4954623386986095
-  hidden linearVelocity_16 0.004540577605499375 -1.060802065754258 -0.21987335993511714
-  hidden angularVelocity_16 4.0303064891321645 -0.023099535464134843 0.09819436473148356
-  hidden rotation_17 -1 0 0 0.49875707406671055
-  hidden linearVelocity_17 -0.010069178765473323 -0.726546520503231 0.2352527708647761
-  hidden angularVelocity_17 4.6366582745756935 0.06779434781629917 0.1393949158991836
-  hidden rotation_18 -0.9999999999999999 0 0 3.3475360665861524
-  hidden linearVelocity_18 -0.04517958296456422 -0.8129574148430653 0.09061032270256929
-  hidden angularVelocity_18 4.529608113839824 0.048923482153588715 0.14064839546204383
-  hidden rotation_19 1 0 0 1.3380242385556411
-  hidden linearVelocity_19 0.011889633195272017 -0.9047319957646972 -0.050938740757791236
-  hidden angularVelocity_19 4.409047838905613 0.007458511617517881 0.10978740182134865
-  hidden rotation_20 -1 0 0 2.46943545260696
-  hidden linearVelocity_20 0.004287727095523227 -0.8712125572952376 -0.19390433600895118
-  hidden angularVelocity_20 3.4365302040344723 -0.031037660627652796 0.10130868928428545
-  translation -0.5737472506876601 8.144979525441634 0.3217955350084074
-  rotation -0.019193229707594267 -0.016565207793061074 -0.9996785552487182 1.5580721142424088
+  hidden position_0_0 542.6985143864456
+  hidden position_0_1 528.1926484847792
+  hidden position_0_2 81.56696464564402
+  hidden position_0_3 78.26050009312821
+  hidden position_0_4 208.95206179617867
+  hidden position_0_5 193.72090955626723
+  hidden position_0_6 75.014229377588
+  hidden position_0_7 73.56438430653975
+  hidden linearVelocity_0 0.006459519503073171 -0.003419108501406511 -1.3525944382574515e-05
+  hidden angularVelocity_0 -0.0001893736490219083 -0.0002656082530578943 0.005328664414732124
+  hidden rotation_13 -1 0 0 2.344577969001158
+  hidden linearVelocity_13 0.0033618153608047634 0.0019758112068361277 0.00014529650572967464
+  hidden angularVelocity_13 -5.0934458806425384 2.845846126747311 -0.04178332719341746
+  hidden rotation_14 -1 0 0 0.40508268169390543
+  hidden linearVelocity_14 0.006472548089387305 0.0001470315221633283 0.00011315771908070862
+  hidden angularVelocity_14 -4.977161917836951 2.7796513567779835 -0.04836216862860875
+  hidden rotation_15 -1 0 0 6.168740959488984
+  hidden linearVelocity_15 0.009909664394815172 -0.0016525561963058862 0.0001310858161372713
+  hidden angularVelocity_15 -0.8498505970614207 0.4744067244445406 -0.00404989621052969
+  hidden rotation_16 -1 0 0 2.862276406973177
+  hidden linearVelocity_16 0.01267935703408095 -0.003243247721030662 0.00014682557680938805
+  hidden angularVelocity_16 -0.646279568586531 0.3608388683410694 -0.00015704948795175266
+  hidden rotation_17 -1 0 0 4.6762386479272715
+  hidden linearVelocity_17 0.0002453038438713904 -0.0036078490105632215 -0.00024377841252962507
+  hidden angularVelocity_17 -1.6186641406468754 0.9041217373648399 -0.009655982861900255
+  hidden rotation_18 1 0 0 5.225350340879636
+  hidden linearVelocity_18 0.0034940193475179416 -0.005298142228169803 -0.00014722869708447663
+  hidden angularVelocity_18 -1.4703106086933035 0.8211757169763226 -0.011224956492243135
+  hidden rotation_19 -1 0 0 0.38399430856704325
+  hidden linearVelocity_19 0.006426724976186069 -0.007061152716607361 -0.0001316845202940247
+  hidden angularVelocity_19 -0.6667864675812915 0.3723034499382477 -0.0007487859445495462
+  hidden rotation_20 -0.9999999999999999 0 0 1.8338393796152872
+  hidden linearVelocity_20 0.009564039654115323 -0.008825091366062235 -0.00011529993026796425
+  hidden angularVelocity_20 -0.6288487057081685 0.35108965699780276 -1.5899893677513026e-05
+  translation -4.5344830848396445 -19.060591798797766 0.3278456745784092
+  rotation 0.02837764748602087 -0.06410858013556878 0.9975393721934792 1.0637081808862063
   name "AgroRover"
-  controller "agro_controller"
+  controller "moose_path_following"
+  color 1 1 1
   bodySlot [
     GPS {
       translation 0 0 0.35
