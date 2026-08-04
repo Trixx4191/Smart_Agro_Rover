@@ -21,6 +21,7 @@ Usage:
 """
 
 import json
+import os
 import threading
 import time
 import logging
@@ -65,11 +66,12 @@ class SerialHandler:
 
         try:
             import serial
-            self._serial = serial.Serial(
-                self.port,
-                self.baud,
-                timeout=2
-            )
+            port = self._resolve_port()
+            if not port:
+                log.error("SerialHandler: no Arduino found on any known port")
+                return False
+            self._serial = serial.Serial(port, self.baud, timeout=2)
+            self.port = port
             time.sleep(2)   # Arduino resets on serial connect — wait for it
             self._running = True
             self._thread  = threading.Thread(target=self._read_loop, daemon=True)
@@ -79,6 +81,28 @@ class SerialHandler:
         except Exception as e:
             log.error(f"SerialHandler: connect failed — {e}")
             return False
+
+    def _resolve_port(self) -> Optional[str]:
+        """
+        Try the configured port first, then fall back to scanning common
+        Nano ports — CH340 clones enumerate as ttyUSB0, genuine/bootloader
+        boards often show up as ttyACM0, and either can shift to *1 if
+        something else was plugged in first.
+        """
+        import glob
+        candidates = [self.port] + sorted(
+            glob.glob("/dev/ttyUSB*") + glob.glob("/dev/ttyACM*")
+        )
+        seen = set()
+        for p in candidates:
+            if p in seen or not p:
+                continue
+            seen.add(p)
+            if os.path.exists(p):
+                if p != self.port:
+                    log.warning(f"SerialHandler: {self.port} not found — using {p} instead")
+                return p
+        return None
 
     def disconnect(self):
         self._running = False
@@ -200,19 +224,27 @@ class SerialHandler:
         if data.get("status") == "ready":
             self._ready = True
             log.info(f"Arduino ready — fw {data.get('fw', '?')}")
+            with self._lock:
+                self._latest.update(data)
+                self._latest["_ts"] = time.time()
+                self._history.append(dict(self._latest))
             return
 
-        # Only store full sensor packets (have 'moisture' key)
-        if "moisture" not in data and "alert" not in data:
+        # Store full sensor packets and stateful acknowledgements.
+        if not any(k in data for k in ("moisture", "alert", "ack", "error", "status")):
             return
+
+        if data.get("ack") == "estop" or data.get("locked") is True:
+            data["estop"] = True
+        elif data.get("ack") == "reset" or data.get("locked") is False:
+            data["estop"] = False
 
         ts = time.time()
         data["_ts"] = ts
 
         with self._lock:
-            if "moisture" in data:
-                self._latest = data
-                self._history.append(data)
+            self._latest.update(data)
+            self._history.append(dict(self._latest))
 
         # Obstacle alert — log it
         if "alert" in data:

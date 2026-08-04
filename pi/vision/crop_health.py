@@ -22,6 +22,7 @@ Usage:
 import os
 import time
 import logging
+import threading
 import numpy as np
 from datetime import datetime
 from typing import Tuple, Optional
@@ -47,37 +48,69 @@ class CropHealthAnalyzer:
         self.simulate        = simulate
 
         self._camera = None
+        self._camera_type = None   # "picamera2" | "opencv" | None
+        self._camera_lock = threading.Lock()   # shared between periodic
+        # capture_and_analyze() calls and the live /video_feed stream —
+        # both use the same physical camera, only one grab at a time.
         os.makedirs(self.image_dir, exist_ok=True)
 
     def start(self):
         if self.simulate:
             log.info("CropHealthAnalyzer: simulation mode")
             return
+
+        # Try the Pi Camera (CSI ribbon) via picamera2 first — this is the
+        # real hardware target. cv2.VideoCapture(0) does NOT see the CSI
+        # camera on modern Raspberry Pi OS (libcamera stack), so it has to
+        # be picamera2 specifically, not OpenCV, for onboard camera access.
+        try:
+            from picamera2 import Picamera2
+            self._camera = Picamera2()
+            still_config = self._camera.create_still_configuration(
+                main={"size": self.resolution}
+            )
+            self._camera.configure(still_config)
+            self._camera.start()
+            time.sleep(2)   # let auto-exposure/white-balance settle
+            self._camera_type = "picamera2"
+            log.info(f"CropHealthAnalyzer: Pi Camera started via picamera2 "
+                     f"@ {self.resolution[0]}x{self.resolution[1]}")
+            return
+        except Exception as e:
+            log.warning(f"CropHealthAnalyzer: picamera2 unavailable ({e}) "
+                        f"— trying USB webcam as fallback")
+
+        # Fallback: USB webcam via OpenCV — useful when developing on a
+        # laptop that has no CSI port at all.
         try:
             import cv2 as _cv2
             self._camera = _cv2.VideoCapture(0)
-            # warm up
             for _ in range(15):
                 self._camera.read()
             if not self._camera.isOpened():
-                raise RuntimeError("Webcam not accessible")
-            log.info("CropHealthAnalyzer: webcam started")
+                raise RuntimeError("no webcam found at index 0")
+            self._camera_type = "opencv"
+            log.info("CropHealthAnalyzer: USB webcam started (OpenCV)")
+            return
         except Exception as e:
-            log.error(f"CropHealthAnalyzer: camera init failed — {e}")
-            log.info("CropHealthAnalyzer: falling back to simulation")
-            self.simulate = True
+            log.error(f"CropHealthAnalyzer: no camera found — picamera2 and "
+                      f"USB webcam both failed ({e})")
+
+        log.warning("CropHealthAnalyzer: falling back to simulation — "
+                    "no working camera detected")
+        self.simulate = True
 
     def stop(self):
-        if self._camera:
-            try:
-                import cv2 as _cv2
-                if hasattr(self._camera, "release"):
-                    self._camera.release()   # webcam
-                else:
-                    self._camera.stop()
-                    self._camera.close()     # picamera2
-            except Exception:
-                pass
+        if not self._camera:
+            return
+        try:
+            if self._camera_type == "picamera2":
+                self._camera.stop()
+                self._camera.close()
+            elif self._camera_type == "opencv":
+                self._camera.release()
+        except Exception:
+            pass
 
     #  Main method 
 
@@ -112,17 +145,79 @@ class CropHealthAnalyzer:
             return self._generate_test_image(full_path)
 
         try:
-            import cv2 as _cv2
-            ret, frame = self._camera.read()
-            if not ret:
-                raise RuntimeError("Failed to read frame")
-            frame = _cv2.resize(frame, (1280, 720))
-            _cv2.imwrite(full_path, frame)
-            log.info(f"CropHealthAnalyzer: captured {filename}")
-            return full_path
+            with self._camera_lock:
+                if self._camera_type == "picamera2":
+                    self._camera.capture_file(full_path)
+                    log.info(f"CropHealthAnalyzer: captured {filename} (Pi Camera)")
+                    return full_path
+
+                elif self._camera_type == "opencv":
+                    import cv2 as _cv2
+                    ret, frame = self._camera.read()
+                    if not ret:
+                        raise RuntimeError("Failed to read frame")
+                    frame = _cv2.resize(frame, (1280, 720))
+                    _cv2.imwrite(full_path, frame)
+                    log.info(f"CropHealthAnalyzer: captured {filename} (USB webcam)")
+                    return full_path
+
+                else:
+                    raise RuntimeError("no camera initialized")
+
         except Exception as e:
             log.error(f"CropHealthAnalyzer: capture failed — {e}")
             return None
+
+    #  Live feed (used by /video_feed) ─
+
+    def get_frame_jpeg(self, quality: int = 70) -> Optional[bytes]:
+        """
+        Grab a single frame from whatever camera is active and return it
+        JPEG-encoded, for MJPEG streaming. Shares the same camera handle
+        and lock as capture_and_analyze() — safe to call concurrently
+        with periodic crop-health captures, they just queue briefly
+        rather than fighting over the hardware.
+        """
+        import cv2 as _cv2
+
+        if self.simulate or self._camera_type is None:
+            return self._generate_live_placeholder_jpeg(quality)
+
+        try:
+            with self._camera_lock:
+                if self._camera_type == "picamera2":
+                    frame = self._camera.capture_array()
+                    if frame.shape[2] == 4:
+                        frame = _cv2.cvtColor(frame, _cv2.COLOR_RGBA2BGR)
+                    else:
+                        frame = _cv2.cvtColor(frame, _cv2.COLOR_RGB2BGR)
+                elif self._camera_type == "opencv":
+                    ret, frame = self._camera.read()
+                    if not ret:
+                        return None
+                else:
+                    return None
+
+            ok, buf = _cv2.imencode(".jpg", frame, [int(_cv2.IMWRITE_JPEG_QUALITY), quality])
+            return buf.tobytes() if ok else None
+        except Exception as e:
+            log.error(f"CropHealthAnalyzer: live frame grab failed — {e}")
+            return None
+
+    def _generate_live_placeholder_jpeg(self, quality: int = 70) -> bytes:
+        """A visibly-fake frame for simulation mode / no-camera state, so
+        the live feed panel shows *something* obviously synthetic rather
+        than silently failing or looking like a frozen real feed."""
+        import cv2 as _cv2
+        img = np.full((480, 640, 3), (40, 38, 33), dtype=np.uint8)   # BGR, matches --ink
+        _cv2.putText(img, "SIMULATION MODE", (140, 220),
+                     _cv2.FONT_HERSHEY_SIMPLEX, 0.9, (140, 213, 232), 2)
+        _cv2.putText(img, "No live camera attached", (150, 260),
+                     _cv2.FONT_HERSHEY_SIMPLEX, 0.55, (170, 168, 160), 1)
+        _cv2.putText(img, datetime.now().strftime("%H:%M:%S"), (270, 320),
+                     _cv2.FONT_HERSHEY_SIMPLEX, 0.6, (170, 168, 160), 1)
+        ok, buf = _cv2.imencode(".jpg", img, [int(_cv2.IMWRITE_JPEG_QUALITY), quality])
+        return buf.tobytes() if ok else b""
 
     def _generate_test_image(self, path: str) -> str:
         """Create a synthetic plant image for testing without real camera."""

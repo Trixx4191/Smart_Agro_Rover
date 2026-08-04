@@ -123,9 +123,9 @@ class DataLogger:
         lat = gps_coords[0] if gps_coords else None
         lon = gps_coords[1] if gps_coords else None
 
-        moisture  = sensor_data.get("moisture",  [None, None])
-        soil_temp = sensor_data.get("soil_temp", [None, None])
-        enc       = sensor_data.get("enc",       [0, 0, 0, 0])
+        moisture  = sensor_data.get("moisture")  or [None, None]
+        soil_temp = sensor_data.get("soil_temp") or [None, None]
+        enc       = sensor_data.get("enc")        or [0, 0, 0, 0]
 
         row = {
             "timestamp":    ts,

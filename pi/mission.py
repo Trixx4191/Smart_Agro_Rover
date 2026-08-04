@@ -1,8 +1,12 @@
 """
 mission.py
 
-Top-level mission controller. Wires all subsystems together
-and runs the patrol loop.
+Top-level mission controller. Wires all subsystems together and brings
+the rover up into standby — dashboard, manual drive (/control), and
+mission control (/mission) are all live immediately. Autonomous patrol
+no longer starts automatically; it starts when you press "Start
+Mission" on /mission (or POST /api/mission/start yourself), so the
+rover never takes off driving the instant this script launches.
 
 Run directly on the Raspberry Pi:
     python -m pi.mission
@@ -12,6 +16,7 @@ Or with simulation mode (no hardware needed):
 """
 
 import sys
+import os
 import time
 import logging
 import argparse
@@ -33,23 +38,38 @@ log = logging.getLogger("mission")
 
 def build_waypoints():
     """
-    Define your patrol waypoints here as (lat, lon) tuples.
-    Measure these with a phone GPS app walking the corners of your plot.
-    For simulation, these are near Kumasi, Ghana.
+    Loads waypoints saved from the dashboard/mission map (data/waypoints.json).
+    Returns an empty list if nothing has been saved yet — waypoint planning
+    is entirely operator-driven, nothing is pre-populated at startup.
+    Returns the full rich waypoint dicts (lat, lon, label, action, speed,
+    wait_sec, notes) — WaypointNavigator.load_waypoints() understands
+    both this and plain (lat, lon) tuples.
     """
-    return [
-        (6.68850, -1.62440),   # SW corner
-        (6.68860, -1.62440),   # NW corner
-        (6.68860, -1.62430),   # NE corner
-        (6.68850, -1.62430),   # SE corner
-    ]
+    import json
+    from pi.config import WAYPOINTS_PATH
+    if os.path.exists(WAYPOINTS_PATH):
+        try:
+            with open(WAYPOINTS_PATH) as f:
+                saved = json.load(f)
+            if saved:
+                log.info(f"Loaded {len(saved)} waypoints from {WAYPOINTS_PATH}")
+                return saved
+        except (json.JSONDecodeError, OSError, KeyError) as e:
+            log.warning(f"Could not read saved waypoints ({e})")
+    log.info("No waypoints saved yet — set up your mission plan at /mission")
+    return []
 
 
-def main(simulate: bool = False):
+def main(simulate: bool = False, manual: bool = False):
     log.info("=" * 55)
     log.info("  AUTONOMOUS FARM ROVER — Mission Start")
     log.info(f"  Mode: {'SIMULATION' if simulate else 'HARDWARE'}")
     log.info("=" * 55)
+
+    if manual:
+        log.info("Note: --manual is no longer needed — manual drive at /control "
+                  "is always available alongside mission control at /mission. "
+                  "Continuing normally.")
 
     #  Import subsystems 
     from pi.comms.serial_handler    import SerialHandler
@@ -58,7 +78,10 @@ def main(simulate: bool = False):
     from pi.navigation.imu_reader   import IMUReader
     from pi.navigation.waypoint_nav import WaypointNavigator
     from pi.vision.crop_health      import CropHealthAnalyzer
-    from pi.vision.dashboard.server        import DashboardServer
+    try:
+        from pi.vision.dashboard.server import DashboardServer
+    except ModuleNotFoundError:
+        from pi.dashboard.server import DashboardServer
 
     #  Initialise 
     log.info("Initialising subsystems...")
@@ -67,8 +90,7 @@ def main(simulate: bool = False):
     gps     = GPSReader(simulate=simulate)
     imu     = IMUReader(simulate=simulate)
     logger  = DataLogger()
-    vision  = CropHealthAnalyzer(simulate=True)  # Vision always simulates for now
-    dash    = DashboardServer(logger)
+    vision  = CropHealthAnalyzer(simulate=simulate)
 
     #  Connect ─
     if not arduino.connect():
@@ -88,7 +110,24 @@ def main(simulate: bool = False):
     if not arduino.is_ready():
         log.warning("Arduino ready signal not received — proceeding anyway")
 
-    #  Dashboard ─
+    #  Navigator — created up front so /api/mission/* has something to
+    #  drive, but nothing runs until a mission is explicitly started. 
+    nav = WaypointNavigator(arduino, gps, imu, logger, vision)
+    nav.load_waypoints(build_waypoints())
+
+    def on_arrival(info):
+        log.info(f"WP{info['waypoint']+1} arrived | "
+                 f"action={info.get('action','?')} | "
+                 f"m={info['sensor'].get('moisture',['?','?'])} | "
+                 f"stress={info['stress']}")
+
+    nav.on_arrival(on_arrival)
+
+    #  Dashboard — wired to every subsystem so /control, /mission, and
+    #  the read-only dashboard all work from this one process. 
+    dash = DashboardServer(logger, arduino=arduino, gps=gps, imu=imu, nav=nav, vision=vision)
+    nav.dashboard = dash   # lets WaypointNavigator push live mission_state updates
+
     dash_thread = threading.Thread(
         target=dash.run,
         kwargs={"debug": False},
@@ -96,18 +135,9 @@ def main(simulate: bool = False):
     )
     dash_thread.start()
     log.info("Dashboard running at http://localhost:5000")
-
-    #  Navigator ─
-    nav = WaypointNavigator(arduino, gps, imu, logger, vision)
-    nav.load_waypoints(build_waypoints())
-
-    # Optional: callback to log mission events
-    def on_arrival(info):
-        log.info(f"WP{info['waypoint']+1} arrived | "
-                 f"m={info['sensor'].get('moisture',['?','?'])} | "
-                 f"stress={info['stress']}")
-
-    nav.on_arrival(on_arrival)
+    log.info("  Monitor:          /")
+    log.info("  Manual drive:     /control")
+    log.info("  Mission control:  /mission")
 
     #  Graceful shutdown 
     def shutdown():
@@ -126,10 +156,11 @@ def main(simulate: bool = False):
     signal.signal(signal.SIGINT,  lambda s, f: shutdown())
     signal.signal(signal.SIGTERM, lambda s, f: shutdown())
 
-    #  Run patrol 
-    log.info("Starting patrol — press Ctrl+C to stop safely")
+    #  Standby — wait for mission/manual commands from the web UI ─
+    log.info("Standing by. Start a mission from /mission or drive manually from /control.")
     try:
-        nav.run_patrol(loops=0)   # infinite loop
+        while True:
+            time.sleep(1)
     except KeyboardInterrupt:
         shutdown()
 
@@ -138,5 +169,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Farm Rover Mission Controller")
     parser.add_argument("--simulate", action="store_true",
                         help="Run in simulation mode (no hardware required)")
+    parser.add_argument("--manual", action="store_true",
+                        help="Deprecated — manual drive is now always available at "
+                             "/control, this flag no longer changes behavior")
     args = parser.parse_args()
-    main(simulate=args.simulate)
+    main(simulate=args.simulate, manual=args.manual)

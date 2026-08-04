@@ -360,6 +360,20 @@ def http_get(path):
     except Exception as e:
         return None, str(e)
 
+
+def http_post(path, payload=None):
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", cfg.DASHBOARD_PORT, timeout=3)
+        body = json.dumps(payload or {}) if payload is not None else None
+        headers = {"Content-Type": "application/json"} if body is not None else {}
+        conn.request("POST", path, body=body, headers=headers)
+        resp = conn.getresponse()
+        response_body = resp.read().decode()
+        conn.close()
+        return resp.status, response_body
+    except Exception as e:
+        return None, str(e)
+
 status, body = http_get("/")
 test("Dashboard / returns 200",         status == 200, f"status={status}")
 test("Dashboard page has rover title",  "Farm Rover" in body if body else False)
@@ -386,6 +400,15 @@ if body3:
 
 status4, body4 = http_get("/api/stress")
 test("/api/stress returns 200",         status4 == 200)
+
+status5, body5 = http_post("/api/control/capture")
+test("/api/control/capture returns 200", status5 == 200, f"status={status5}")
+if body5:
+    try:
+        data = json.loads(body5)
+        test("Capture response is ok", data.get("ok") is True)
+    except json.JSONDecodeError:
+        test("Capture response is valid JSON", False, "parse error")
 
 
 # ══════════════════════════════════════════════════════════════

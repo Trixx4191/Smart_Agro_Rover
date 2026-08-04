@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AgroRover — Drive</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bone:        #F6F4EF;
+    --paper:       #FFFFFF;
+    --ink:         #1B1A17;
+    --graphite:    #6B675E;
+    --graphite-lt: #99958A;
+    --hairline:    #E3DFD3;
+    --accent:      #2E3D4E;
+    --warn:        #8C3A2B;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bone);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 1.5rem 1.25rem 3rem;
+    user-select: none;
+  }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  header { width: 100%; max-width: 420px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  header a { color: var(--graphite); text-decoration: none; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; }
+  h1 { font-size: 1rem; font-weight: 600; }
+
+  #status {
+    width: 100%; max-width: 420px; background: var(--paper); border: 1px solid var(--hairline);
+    padding: 10px 16px; margin-bottom: 1.5rem; font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem; color: var(--graphite); display: flex; justify-content: space-between; align-items: center;
+  }
+  #status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--graphite-lt); display: inline-block; margin-right: 8px; }
+  #status.ok .dot { background: var(--accent); }
+  #status.bad .dot { background: var(--warn); }
+
+  .pad { display: grid; grid-template-columns: 84px 84px 84px; grid-template-rows: 84px 84px 84px; gap: 10px; margin-top: 0.5rem; }
+  .pad button {
+    border: 1px solid var(--hairline); background: var(--paper); color: var(--ink);
+    font-size: 22px; display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation; transition: background 0.08s, border-color 0.08s;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .pad button:active, .pad button.held { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .pad .empty { background: transparent; border: none; }
+  .pad .stop {
+    background: var(--paper); border: 1px solid var(--warn); color: var(--warn);
+    font-size: 13px; font-weight: 600; letter-spacing: 0.06em;
+  }
+  .pad .stop:active { background: var(--warn); color: var(--paper); }
+
+  .mode-toggle { width: 100%; max-width: 420px; margin: 1rem 0 1.5rem; display: flex; gap: 0.75rem; }
+  .mode-toggle button {
+    flex: 1; border: 1px solid var(--hairline); background: var(--paper); color: var(--ink);
+    padding: 0.7rem 0.8rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
+    letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+  }
+  .mode-toggle button.active { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .capture-row { width: 100%; max-width: 420px; margin-top: 1.25rem; }
+  .capture-row button {
+    width: 100%; border: 1px solid var(--accent); background: var(--paper); color: var(--accent);
+    padding: 0.8rem 1rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem;
+    letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+  }
+  .capture-row button:active { background: var(--accent); color: var(--paper); }
+  .speed-row { width: 100%; max-width: 420px; margin-top: 2rem; }
+  .speed-row label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--graphite); display: flex; justify-content: space-between; margin-bottom: 8px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+
+  .hint { margin-top: 2rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--graphite-lt); text-align: center; max-width: 320px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AGRO ROVER — Drive</h1>
+  <div style="display:flex;gap:12px;">
+    <a href="/mission" style="color:var(--accent);font-weight:600;">Mission</a>
+    <a href="/">Dashboard</a>
+  </div>
+</header>
+
+<div id="status">
+  <span><span class="dot"></span><span id="statusText">checking…</span></span>
+  <span id="lastCmd" class="mono">—</span>
+</div>
+
+<div class="mode-toggle">
+  <button id="btnReadings" class="active">Readings</button>
+  <button id="btnDrive">Drive</button>
+</div>
+
+<div class="pad">
+  <div class="empty"></div>
+  <button id="btn-forward" data-dir="forward">▲</button>
+  <div class="empty"></div>
+
+  <button id="btn-left" data-dir="left">◀</button>
+  <button id="btn-stop" class="stop">STOP</button>
+  <button id="btn-right" data-dir="right">▶</button>
+
+  <div class="empty"></div>
+  <button id="btn-backward" data-dir="backward">▼</button>
+  <div class="empty"></div>
+</div>
+
+<div class="capture-row">
+  <button id="btnCapture">Capture Reading</button>
+</div>
+
+<div class="speed-row">
+  <label>Speed <span id="speedVal">150</span> / 255</label>
+  <input type="range" id="speed" min="60" max="255" value="150">
+</div>
+
+<p class="hint" id="hintText">
+  Readings mode keeps the rover in observation mode. Switch to Drive to move the rover manually.
+</p>
+
+<script>
+const speedInput = document.getElementById('speed');
+const speedVal   = document.getElementById('speedVal');
+const statusEl   = document.getElementById('status');
+const statusText = document.getElementById('statusText');
+const lastCmdEl  = document.getElementById('lastCmd');
+
+speedInput.addEventListener('input', () => speedVal.textContent = speedInput.value);
+
+let activeDir = null;
+let controlMode = 'readings';
+
+function setMode(mode) {
+  controlMode = mode;
+  document.getElementById('btnReadings').classList.toggle('active', mode === 'readings');
+  document.getElementById('btnDrive').classList.toggle('active', mode === 'drive');
+  document.querySelector('.pad').style.opacity = mode === 'drive' ? '1' : '0.55';
+  document.querySelector('.pad').style.pointerEvents = mode === 'drive' ? 'auto' : 'none';
+  document.getElementById('hintText').textContent = mode === 'drive'
+    ? 'Drive mode is active. Press and hold a direction to move the rover.'
+    : 'Readings mode keeps the rover in observation mode. Switch to Drive to move the rover manually.';
+}
+
+async function sendMove(dir) {
+  if (controlMode !== 'drive') return;
+  activeDir = dir;
+  lastCmdEl.textContent = dir + ' @ ' + speedInput.value;
+  try {
+    const r = await fetch('/api/control/move', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({dir: dir, speed: parseInt(speedInput.value)})
+    });
+    if (!r.ok) throw new Error('bad response');
+  } catch (e) { lastCmdEl.textContent = 'send failed'; }
+}
+
+async function sendStop() {
+  activeDir = null;
+  lastCmdEl.textContent = 'stop';
+  try { await fetch('/api/control/stop', {method: 'POST'}); }
+  catch (e) { lastCmdEl.textContent = 'stop failed'; }
+}
+
+async function captureReading() {
+  lastCmdEl.textContent = 'capture';
+  try {
+    const r = await fetch('/api/control/capture', { method: 'POST' });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'capture failed');
+    lastCmdEl.textContent = 'capture ok';
+  } catch (e) {
+    lastCmdEl.textContent = 'capture failed';
+  }
+}
+
+function wireButton(id) {
+  const el = document.getElementById(id);
+  const dir = el.dataset.dir;
+  const start = (ev) => { ev.preventDefault(); el.classList.add('held'); sendMove(dir); };
+  const end   = (ev) => { ev.preventDefault(); el.classList.remove('held'); if (activeDir === dir) sendStop(); };
+  el.addEventListener('touchstart', start, {passive:false});
+  el.addEventListener('touchend', end, {passive:false});
+  el.addEventListener('touchcancel', end, {passive:false});
+  el.addEventListener('mousedown', start);
+  el.addEventListener('mouseup', end);
+  el.addEventListener('mouseleave', end);
+}
+['btn-forward','btn-backward','btn-left','btn-right'].forEach(wireButton);
+document.getElementById('btn-stop').addEventListener('click', sendStop);
+document.getElementById('btnCapture').addEventListener('click', captureReading);
+document.getElementById('btnReadings').addEventListener('click', () => setMode('readings'));
+document.getElementById('btnDrive').addEventListener('click', () => setMode('drive'));
+
+setMode('readings');
+
+document.addEventListener('visibilitychange', () => { if (document.hidden && activeDir) sendStop(); });
+window.addEventListener('blur', () => { if (activeDir) sendStop(); });
+
+async function pollStatus() {
+  try {
+    const r = await fetch('/api/summary');
+    if (r.ok) { statusEl.className = 'ok'; statusText.textContent = 'Connected'; }
+    else throw new Error();
+  } catch (e) { statusEl.className = 'bad'; statusText.textContent = 'Unreachable'; }
+}
+pollStatus();
+setInterval(pollStatus, 3000);
+</script>
+
+</body>
+</html>

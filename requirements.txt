@@ -4,7 +4,7 @@
 # Serial communication (Arduino ↔ Pi)
 pyserial==3.5
 
-# I2C / hardware (These 2 are installed on Pi only — skip on dev machine for now )
+# I2C / hardware (These 2 are installed on Pi only — skip on dev machine for now)
 # smbus2==0.4.3
 # picamera2   # installed via apt on Pi: sudo apt install python3-picamera2
 
@@ -15,8 +15,11 @@ pynmea2==1.19.0
 opencv-python==4.9.0.80
 numpy==1.26.4
 
-# Web dashboard
+# Web dashboard + live mission telemetry
 flask==3.0.3
+flask-socketio==5.3.6
+# Uses Flask-SocketIO's built-in threading mode — no eventlet/gevent
+# needed, keeps this simple to install on a Pi.
 
 # Data
 # sqlite3 is built into Python standard library — no install needed
