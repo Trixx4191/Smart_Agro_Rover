@@ -139,7 +139,8 @@ class DashboardServer:
                 readings_mode=False,
                 status="manual"
             )
-            arduino.move(direction, speed)
+            if not arduino.move(direction, speed):
+                return jsonify({"error": "arduino command send failed"}), 503
             return jsonify({"ok": True, "dir": direction, "speed": speed})
 
         @app.route("/api/control/stop", methods=["POST"])
@@ -151,7 +152,8 @@ class DashboardServer:
                 readings_mode=True,
                 status="idle"
             )
-            arduino.stop()
+            if not arduino.stop():
+                return jsonify({"error": "arduino stop command send failed"}), 503
             return jsonify({"ok": True})
 
         @app.route("/api/control/capture", methods=["POST"])
@@ -164,7 +166,8 @@ class DashboardServer:
 
             if arduino is not None:
                 try:
-                    arduino.request_sample()
+                    if not arduino.request_sample():
+                        return jsonify({"error": "arduino capture command send failed"}), 503
                 except Exception as exc:
                     log.exception("Capture request failed")
                     return jsonify({"error": str(exc)}), 500

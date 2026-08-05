@@ -133,6 +133,7 @@ class SerialHandler:
         try:
             with self._lock:
                 self._serial.write(raw.encode("utf-8"))
+                self._serial.flush()
             return True
         except Exception as e:
             log.error(f"SerialHandler: send error — {e}")
@@ -142,19 +143,19 @@ class SerialHandler:
 
     def move(self, direction: str, speed: int = None):
         from pi.config import SPEED_CRUISE
-        self.send({"cmd": "move", "dir": direction, "speed": speed or SPEED_CRUISE})
+        return self.send({"cmd": "move", "dir": direction, "speed": speed or SPEED_CRUISE})
 
     def stop(self):
-        self.send({"cmd": "stop"})
+        return self.send({"cmd": "stop"})
 
     def estop(self):
-        self.send({"cmd": "estop"})
+        return self.send({"cmd": "estop"})
 
     def reset_estop(self):
-        self.send({"cmd": "reset"})
+        return self.send({"cmd": "reset"})
 
     def request_sample(self):
-        self.send({"cmd": "sample"})
+        return self.send({"cmd": "sample"})
 
     #  Data access ─
 
