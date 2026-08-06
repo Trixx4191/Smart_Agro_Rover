@@ -2,126 +2,393 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>AgroRover — Drive</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bone:        #F6F4EF;
-    --paper:       #FFFFFF;
-    --ink:         #1B1A17;
-    --graphite:    #6B675E;
-    --graphite-lt: #99958A;
-    --hairline:    #E3DFD3;
-    --accent:      #2E3D4E;
-    --warn:        #8C3A2B;
+    --bg:        #0b0f0d;
+    --bg-elev:   #121a16;
+    --bg-card:   #16201b;
+    --line:      rgba(255,255,255,0.08);
+    --line-strong: rgba(255,255,255,0.14);
+    --text:      #eef5f0;
+    --muted:     #8a9a90;
+    --faint:     #5c6b62;
+    --green:     #3dd68c;
+    --green-dim: rgba(61,214,140,0.15);
+    --green-glow: rgba(61,214,140,0.35);
+    --amber:     #f0b429;
+    --red:       #f07167;
+    --red-dim:   rgba(240,113,103,0.15);
+    --radius:    16px;
+    --radius-sm: 12px;
+    --safe-b:    env(safe-area-inset-bottom, 0px);
   }
+
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+  html, body { height: 100%; }
   body {
-    font-family: 'IBM Plex Sans', sans-serif;
-    background: var(--bone);
-    color: var(--ink);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(61,214,140,0.08), transparent 55%),
+      radial-gradient(800px 400px at 100% 100%, rgba(61,214,140,0.04), transparent 40%),
+      var(--bg);
+    color: var(--text);
     min-height: 100vh;
-    display: flex; flex-direction: column; align-items: center;
-    padding: 1.5rem 1.25rem 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.25rem 1.25rem calc(2rem + var(--safe-b));
     user-select: none;
   }
-  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
 
-  header { width: 100%; max-width: 420px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-  header a { color: var(--graphite); text-decoration: none; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; }
-  h1 { font-size: 1rem; font-weight: 600; }
+  /* Top nav */
+  .top {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-mark {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--green), #1a9f5c);
+    display: grid; place-items: center;
+    box-shadow: 0 0 20px var(--green-glow);
+  }
+  .brand-mark svg { width: 16px; height: 16px; }
+  .brand h1 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .brand span {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+  .nav-links { display: flex; gap: 6px; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    transition: 0.15s ease;
+  }
+  .nav-links a:hover {
+    color: var(--text);
+    border-color: var(--line);
+    background: var(--bg-elev);
+  }
 
+  /* Status pill */
   #status {
-    width: 100%; max-width: 420px; background: var(--paper); border: 1px solid var(--hairline);
-    padding: 10px 16px; margin-bottom: 1.5rem; font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.72rem; color: var(--graphite); display: flex; justify-content: space-between; align-items: center;
+    width: 100%;
+    max-width: 420px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
   }
-  #status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--graphite-lt); display: inline-block; margin-right: 8px; }
-  #status.ok .dot { background: var(--accent); }
-  #status.bad .dot { background: var(--warn); }
+  #status .left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  #status .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--faint);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
+  }
+  #status.ok .dot {
+    background: var(--green);
+    box-shadow: 0 0 0 3px var(--green-dim), 0 0 12px var(--green-glow);
+  }
+  #status.bad .dot {
+    background: var(--red);
+    box-shadow: 0 0 0 3px var(--red-dim);
+  }
+  #lastCmd {
+    font-size: 0.72rem;
+    color: var(--green);
+    background: var(--green-dim);
+    padding: 6px 10px;
+    border-radius: 8px;
+    max-width: 55%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-  .pad { display: grid; grid-template-columns: 84px 84px 84px; grid-template-rows: 84px 84px 84px; gap: 10px; margin-top: 0.5rem; }
-  .pad button {
-    border: 1px solid var(--hairline); background: var(--paper); color: var(--ink);
-    font-size: 22px; display: flex; align-items: center; justify-content: center;
-    touch-action: manipulation; transition: background 0.08s, border-color 0.08s;
-    font-family: 'IBM Plex Mono', monospace;
+  /* Mode toggle */
+  .mode-toggle {
+    width: 100%;
+    max-width: 420px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    margin-bottom: 1.5rem;
   }
-  .pad button:active, .pad button.held { background: var(--accent); color: var(--paper); border-color: var(--accent); }
-  .pad .empty { background: transparent; border: none; }
-  .pad .stop {
-    background: var(--paper); border: 1px solid var(--warn); color: var(--warn);
-    font-size: 13px; font-weight: 600; letter-spacing: 0.06em;
-  }
-  .pad .stop:active { background: var(--warn); color: var(--paper); }
-
-  .mode-toggle { width: 100%; max-width: 420px; margin: 1rem 0 1.5rem; display: flex; gap: 0.75rem; }
   .mode-toggle button {
-    flex: 1; border: 1px solid var(--hairline); background: var(--paper); color: var(--ink);
-    padding: 0.7rem 0.8rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
-    letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    padding: 12px 8px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.15s ease;
   }
-  .mode-toggle button.active { background: var(--accent); color: var(--paper); border-color: var(--accent); }
-  .capture-row { width: 100%; max-width: 420px; margin-top: 1.25rem; }
-  .capture-row button {
-    width: 100%; border: 1px solid var(--accent); background: var(--paper); color: var(--accent);
-    padding: 0.8rem 1rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem;
-    letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+  .mode-toggle button.active {
+    background: var(--bg-card);
+    color: var(--text);
+    box-shadow: 0 1px 0 var(--line-strong), 0 4px 16px rgba(0,0,0,0.25);
   }
-  .capture-row button:active { background: var(--accent); color: var(--paper); }
-  .speed-row { width: 100%; max-width: 420px; margin-top: 2rem; }
-  .speed-row label { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--graphite); display: flex; justify-content: space-between; margin-bottom: 8px; }
-  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .mode-toggle button.active#btnDrive {
+    color: var(--green);
+  }
 
-  .hint { margin-top: 2rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--graphite-lt); text-align: center; max-width: 320px; line-height: 1.6; }
+  /* D-pad */
+  .pad-wrap {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .pad {
+    display: grid;
+    grid-template-columns: 96px 96px 96px;
+    grid-template-rows: 96px 96px 96px;
+    gap: 12px;
+  }
+  .pad button {
+    border: 1px solid var(--line-strong);
+    background: linear-gradient(180deg, #1c2822 0%, #141c18 100%);
+    color: var(--text);
+    font-size: 26px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    cursor: pointer;
+    transition: transform 0.08s ease, background 0.08s ease, border-color 0.08s ease, box-shadow 0.08s ease;
+    box-shadow: 0 6px 0 #0a0e0c, 0 10px 24px rgba(0,0,0,0.35);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pad button:active, .pad button.held {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #0a0e0c, 0 4px 12px rgba(0,0,0,0.3);
+    background: linear-gradient(180deg, var(--green) 0%, #2bb873 100%);
+    border-color: transparent;
+    color: #062216;
+  }
+  .pad .empty { background: transparent; border: none; box-shadow: none; pointer-events: none; }
+  .pad .stop {
+    background: linear-gradient(180deg, #2a1816 0%, #1a100f 100%);
+    border-color: rgba(240,113,103,0.35);
+    color: var(--red);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    box-shadow: 0 6px 0 #0d0808, 0 10px 24px rgba(0,0,0,0.35);
+  }
+  .pad .stop:active {
+    background: linear-gradient(180deg, var(--red) 0%, #d4554c 100%);
+    color: #1a0808;
+    border-color: transparent;
+    box-shadow: 0 2px 0 #0d0808, 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  /* Actions */
+  .capture-row, .speed-row {
+    width: 100%;
+    max-width: 420px;
+  }
+  .capture-row { margin-top: 0.25rem; }
+  .capture-row button {
+    width: 100%;
+    border: 1px solid var(--line-strong);
+    background: var(--bg-card);
+    color: var(--text);
+    padding: 14px 16px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: 0.15s ease;
+  }
+  .capture-row button:active {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .speed-row {
+    margin-top: 1.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px 20px;
+  }
+  .speed-row label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .speed-row label span {
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--bg);
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 3px solid #0b0f0d;
+    box-shadow: 0 0 0 2px var(--green), 0 0 16px var(--green-glow);
+    cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 3px solid #0b0f0d;
+    box-shadow: 0 0 0 2px var(--green);
+    cursor: pointer;
+  }
+
+  .hint {
+    margin-top: 1.75rem;
+    font-size: 0.78rem;
+    color: var(--faint);
+    text-align: center;
+    max-width: 340px;
+    line-height: 1.55;
+  }
+
+  /* Disabled pad look when readings mode */
+  .pad.is-locked {
+    opacity: 0.4;
+    filter: grayscale(0.4);
+    pointer-events: none;
+  }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>AGRO ROVER — Drive</h1>
-  <div style="display:flex;gap:12px;">
-    <a href="/mission" style="color:var(--accent);font-weight:600;">Mission</a>
-    <a href="/">Dashboard</a>
+<div class="top">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#062216" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3c-2 4-6 6-6 10a6 6 0 0 0 12 0c0-4-4-6-6-10z"/>
+      </svg>
+    </div>
+    <div>
+      <h1>AgroRover</h1>
+      <span>Manual drive</span>
+    </div>
   </div>
-</header>
+  <div class="nav-links">
+    <a href="/mission">Mission</a>
+    <a href="/">Home</a><a href="/dashboard">Dashboard</a>
+  </div>
+</div>
 
 <div id="status">
-  <span><span class="dot"></span><span id="statusText">checking…</span></span>
-  <span id="lastCmd" class="mono">—</span>
+  <div class="left">
+    <span class="dot"></span>
+    <span id="statusText">checking…</span>
+  </div>
+  <span id="lastCmd" class="mono">idle</span>
 </div>
 
 <div class="mode-toggle">
-  <button id="btnReadings" class="active">Readings</button>
-  <button id="btnDrive">Drive</button>
+  <button id="btnReadings">Readings</button>
+  <button id="btnDrive" class="active">Drive</button>
 </div>
 
-<div class="pad">
-  <div class="empty"></div>
-  <button id="btn-forward" data-dir="forward">▲</button>
-  <div class="empty"></div>
+<div class="pad-wrap">
+  <div class="pad" id="pad">
+    <div class="empty"></div>
+    <button id="btn-forward" data-dir="forward">▲</button>
+    <div class="empty"></div>
 
-  <button id="btn-left" data-dir="left">◀</button>
-  <button id="btn-stop" class="stop">STOP</button>
-  <button id="btn-right" data-dir="right">▶</button>
+    <button id="btn-left" data-dir="left">◀</button>
+    <button id="btn-stop" class="stop">STOP</button>
+    <button id="btn-right" data-dir="right">▶</button>
 
-  <div class="empty"></div>
-  <button id="btn-backward" data-dir="backward">▼</button>
-  <div class="empty"></div>
+    <div class="empty"></div>
+    <button id="btn-backward" data-dir="backward">▼</button>
+    <div class="empty"></div>
+  </div>
 </div>
 
 <div class="capture-row">
-  <button id="btnCapture">Capture Reading</button>
+  <button id="btnCapture">Capture reading</button>
 </div>
 
 <div class="speed-row">
-  <label>Speed <span id="speedVal">150</span> / 255</label>
+  <label>Cruise speed <span id="speedVal">150</span><span style="color:var(--faint)"> / 255</span></label>
   <input type="range" id="speed" min="60" max="255" value="150">
 </div>
 
 <p class="hint" id="hintText">
-  Readings mode keeps the rover in observation mode. Switch to Drive to move the rover manually.
+  Drive mode is active. Press and hold a direction to move the rover.
 </p>
 
 <script>
@@ -130,21 +397,21 @@ const speedVal   = document.getElementById('speedVal');
 const statusEl   = document.getElementById('status');
 const statusText = document.getElementById('statusText');
 const lastCmdEl  = document.getElementById('lastCmd');
+const padEl      = document.getElementById('pad');
 
 speedInput.addEventListener('input', () => speedVal.textContent = speedInput.value);
 
 let activeDir = null;
-let controlMode = 'readings';
+let controlMode = 'drive';
 
 function setMode(mode) {
   controlMode = mode;
   document.getElementById('btnReadings').classList.toggle('active', mode === 'readings');
   document.getElementById('btnDrive').classList.toggle('active', mode === 'drive');
-  document.querySelector('.pad').style.opacity = mode === 'drive' ? '1' : '0.55';
-  document.querySelector('.pad').style.pointerEvents = mode === 'drive' ? 'auto' : 'none';
+  padEl.classList.toggle('is-locked', mode !== 'drive');
   document.getElementById('hintText').textContent = mode === 'drive'
     ? 'Drive mode is active. Press and hold a direction to move the rover.'
-    : 'Readings mode keeps the rover in observation mode. Switch to Drive to move the rover manually.';
+    : 'Readings mode — observation only. Switch to Drive to move the rover.';
 }
 
 async function sendMove(dir) {
@@ -168,7 +435,7 @@ async function sendStop() {
 }
 
 async function captureReading() {
-  lastCmdEl.textContent = 'capture';
+  lastCmdEl.textContent = 'capture…';
   try {
     const r = await fetch('/api/control/capture', { method: 'POST' });
     const data = await r.json().catch(() => ({}));
@@ -197,7 +464,7 @@ document.getElementById('btnCapture').addEventListener('click', captureReading);
 document.getElementById('btnReadings').addEventListener('click', () => setMode('readings'));
 document.getElementById('btnDrive').addEventListener('click', () => setMode('drive'));
 
-setMode('readings');
+setMode('drive');
 
 document.addEventListener('visibilitychange', () => { if (document.hidden && activeDir) sendStop(); });
 window.addEventListener('blur', () => { if (activeDir) sendStop(); });

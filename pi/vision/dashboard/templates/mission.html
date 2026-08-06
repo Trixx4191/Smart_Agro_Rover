@@ -5,33 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AgroRover — Mission Control</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bone:        #F6F4EF;
-    --paper:       #FFFFFF;
-    --paper-alt:   #FBFAF6;
-    --ink:         #1B1A17;
-    --graphite:    #6B675E;
-    --graphite-lt: #99958A;
-    --hairline:    #E3DFD3;
-    --hairline-lo: #EDEAE1;
-    --accent:      #2E3D4E;
-    --accent-tint: #E8ECEF;
-    --warn:        #8C3A2B;
-    --warn-tint:   #F3E5E0;
-    --green:       #2D6A4F;
-    --green-tint:  #D8F3DC;
-    --blue:        #1B4965;
-    --blue-tint:   #CAE9FF;
-    --orange:      #BC6C25;
-    --orange-tint: #FEFAE0;
+    --bone:        #0b0f0d;
+    --paper:       #121a16;
+    --paper-alt:   #16201b;
+    --ink:         #eef5f0;
+    --graphite:    #8a9a90;
+    --graphite-lt: #5c6b62;
+    --hairline:    rgba(255,255,255,0.08);
+    --hairline-lo: rgba(255,255,255,0.05);
+    --accent:      #3dd68c;
+    --accent-tint: rgba(61,214,140,0.12);
+    --warn:        #f07167;
+    --warn-tint:   rgba(240,113,103,0.12);
+    --green:       #3dd68c;
+    --green-tint:  rgba(61,214,140,0.15);
+    --blue:        #6ec8ff;
+    --blue-tint:   rgba(110,200,255,0.12);
+    --orange:      #f0b429;
+    --orange-tint: rgba(240,180,41,0.12);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body {
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
     background: var(--bone);
     color: var(--ink);
     height: 100vh;
@@ -39,14 +39,14 @@
     font-size: 14px;
     line-height: 1.5;
   }
-  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
 
   /* ── Top bar ──────────────────────────────────────────── */
   .topbar {
     position: fixed; top: 0; left: 0; right: 0; z-index: 300;
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 1.5rem; height: 48px;
-    background: rgba(246,244,239,0.95);
+    background: rgba(11,15,13,0.95);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--hairline);
   }
@@ -56,14 +56,14 @@
   .topbar-title span { font-weight: 400; color: var(--graphite); }
   .topbar-nav { display: flex; gap: 1.25rem; list-style: none; }
   .topbar-nav a {
-    text-decoration: none; font-family: 'IBM Plex Mono', monospace;
+    text-decoration: none; font-family: 'JetBrains Mono', monospace;
     font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--graphite); padding-bottom: 3px; border-bottom: 1px solid transparent;
     transition: color 0.15s, border-color 0.15s;
   }
   .topbar-nav a:hover { color: var(--ink); }
   .topbar-nav a.active { color: var(--ink); border-color: var(--accent); }
-  .topbar-status { display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--graphite); }
+  .topbar-status { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--graphite); }
   .topbar-right { display: flex; align-items: center; gap: 1rem; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--graphite-lt); }
   .dot.live { background: var(--green); }
@@ -86,7 +86,7 @@
   }
   .mobile-menu.open { max-height: 300px; }
   .mobile-menu a {
-    text-decoration: none; color: var(--ink); font-family: 'IBM Plex Mono', monospace;
+    text-decoration: none; color: var(--ink); font-family: 'JetBrains Mono', monospace;
     font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase;
     padding: 1rem 1.5rem; border-bottom: 1px solid var(--hairline-lo);
   }
@@ -106,13 +106,13 @@
     background: var(--paper-alt);
     z-index: 1;
   }
-  .leaflet-container { font-family: 'IBM Plex Sans', sans-serif; }
+  .leaflet-container { font-family: 'DM Sans', system-ui, sans-serif; }
 
   /* Waypoint markers */
   .wp-marker {
     background: var(--accent); color: var(--paper); width: 26px; height: 26px;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 600;
     border: 2px solid var(--paper); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: grab;
     border-radius: 50%;
   }
@@ -154,7 +154,7 @@
   /* Zone polygon */
   .zone-hint {
     padding: 6px 10px; background: var(--paper); border: 1px solid var(--hairline);
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--graphite);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--graphite);
     box-shadow: 0 2px 6px rgba(0,0,0,0.1); border-radius: 4px;
   }
 
@@ -176,7 +176,7 @@
   }
   .mission-status-left { display: flex; align-items: center; gap: 10px; }
   .status-badge {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.06em;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; letter-spacing: 0.06em;
     text-transform: uppercase; padding: 3px 8px; border-radius: 3px; font-weight: 600;
   }
   .status-badge.idle     { background: var(--hairline-lo); color: var(--graphite); }
@@ -185,7 +185,7 @@
   .status-badge.returning{ background: var(--blue-tint); color: var(--blue); }
   .status-badge.aborted  { background: var(--warn-tint); color: var(--warn); }
   .status-badge.completed{ background: var(--green-tint); color: var(--green); }
-  .status-mode { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--graphite); }
+  .status-mode { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--graphite); }
   .progress-track { height: 2px; background: var(--hairline-lo); }
   .progress-fill { height: 100%; width: 0%; background: var(--green); transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
 
@@ -193,7 +193,7 @@
   .live-feed-header {
     width: 100%; display: flex; align-items: center; justify-content: space-between;
     padding: 10px 14px; background: none; border: none; cursor: pointer;
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
     letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink);
   }
   .live-feed-title { display: flex; align-items: center; gap: 8px; }
@@ -216,7 +216,7 @@
   .live-feed-body img { width: 100%; height: 220px; object-fit: cover; display: block; }
   .live-feed-empty {
     height: 220px; display: flex; align-items: center; justify-content: center;
-    color: var(--graphite-lt); font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
+    color: var(--graphite-lt); font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
   }
 
   /* Tabs */
@@ -225,7 +225,7 @@
   }
   .tab-btn {
     flex: 1; padding: 10px 0; text-align: center;
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.06em;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.06em;
     text-transform: uppercase; color: var(--graphite);
     background: none; border: none; border-bottom: 2px solid transparent;
     cursor: pointer; transition: color 0.15s, border-color 0.15s;
@@ -238,7 +238,7 @@
 
   /* ── Waypoint List Tab ────────────────────────────────── */
   .wp-section { padding: 12px 16px; border-bottom: 1px solid var(--hairline-lo); }
-  .wp-section-title { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--graphite-lt); margin-bottom: 8px; }
+  .wp-section-title { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--graphite-lt); margin-bottom: 8px; }
 
   .wp-card {
     padding: 10px 16px; border-bottom: 1px solid var(--hairline-lo);
@@ -249,11 +249,11 @@
   .wp-card.visited { opacity: 0.55; }
   .wp-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
   .wp-card-label { font-weight: 600; font-size: 0.85rem; }
-  .wp-card-idx { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--graphite-lt); }
-  .wp-card-coords { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--graphite); }
+  .wp-card-idx { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--graphite-lt); }
+  .wp-card-coords { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--graphite); }
   .wp-card-meta { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
   .wp-tag {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.58rem; letter-spacing: 0.04em;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; letter-spacing: 0.04em;
     text-transform: uppercase; padding: 2px 6px; border-radius: 2px;
   }
   .wp-tag.action  { background: var(--accent-tint); color: var(--accent); }
@@ -263,7 +263,7 @@
   .wp-tag.dist    { background: var(--blue-tint); color: var(--blue); }
   .wp-card-actions { display: flex; gap: 6px; margin-top: 6px; }
   .wp-card-actions button {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
     background: none; border: 1px solid var(--hairline); padding: 3px 8px;
     cursor: pointer; color: var(--graphite); border-radius: 2px;
     transition: background 0.15s, border-color 0.15s;
@@ -292,13 +292,13 @@
   .modal h3 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; }
   .form-group { margin-bottom: 12px; }
   .form-group label {
-    display: block; font-family: 'IBM Plex Mono', monospace;
+    display: block; font-family: 'JetBrains Mono', monospace;
     font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--graphite); margin-bottom: 4px;
   }
   .form-group input, .form-group select, .form-group textarea {
     width: 100%; padding: 8px 10px; border: 1px solid var(--hairline);
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
     background: var(--paper); color: var(--ink);
   }
   .form-group textarea { resize: vertical; min-height: 48px; }
@@ -309,7 +309,7 @@
   /* ── Controls Tab ─────────────────────────────────────── */
   .ctrl-section { padding: 16px; border-bottom: 1px solid var(--hairline-lo); }
   .ctrl-section h4 {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
     letter-spacing: 0.06em; text-transform: uppercase; color: var(--graphite-lt);
     margin-bottom: 12px;
   }
@@ -327,7 +327,7 @@
   .ctrl-btn-row { display: flex; gap: 8px; margin-bottom: 8px; }
   .ctrl-btn {
     flex: 1; padding: 10px 0; text-align: center;
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
     letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600;
     border: 1px solid var(--hairline); background: var(--paper); color: var(--ink);
     cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.1s;
@@ -346,7 +346,7 @@
 
   .speed-control { margin-top: 8px; }
   .speed-control label {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.06em;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; letter-spacing: 0.06em;
     text-transform: uppercase; color: var(--graphite); display: flex; justify-content: space-between;
     margin-bottom: 6px;
   }
@@ -355,7 +355,7 @@
   /* ── Zone Tab ─────────────────────────────────────────── */
   .zone-section { padding: 16px; border-bottom: 1px solid var(--hairline-lo); }
   .zone-section h4 {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
     letter-spacing: 0.06em; text-transform: uppercase; color: var(--graphite-lt);
     margin-bottom: 8px;
   }
@@ -364,23 +364,23 @@
   }
   .zone-config { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .zone-config label {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.06em;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; letter-spacing: 0.06em;
     text-transform: uppercase; color: var(--graphite); display: block; margin-bottom: 4px;
   }
   .zone-config input {
     width: 100%; padding: 6px 8px; border: 1px solid var(--hairline);
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
   }
   .zone-vertices { margin-bottom: 12px; }
   .zone-vertex {
     display: flex; align-items: center; gap: 8px; padding: 4px 0;
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--graphite);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--graphite);
   }
   .zone-vertex .idx { width: 20px; color: var(--graphite-lt); }
   .zone-stats {
     display: flex; gap: 16px; padding: 8px 10px; margin-bottom: 12px;
     background: var(--accent-tint); border: 1px solid var(--hairline);
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--graphite);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--graphite);
   }
   .zone-stats b { color: var(--ink); font-weight: 600; }
 
@@ -401,7 +401,7 @@
     pointer-events: auto; display: inline-flex; align-items: center; gap: 6px;
     background: rgba(255,255,255,0.92); backdrop-filter: blur(6px);
     padding: 6px 12px; border: 1px solid var(--hairline);
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--ink);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--ink);
     box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 4px; margin-bottom: 4px;
   }
   .info-chip .val { font-weight: 600; }
@@ -409,7 +409,7 @@
 
   /* ── Buttons ──────────────────────────────────────────── */
   .btn {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.04em; text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.04em; text-transform: uppercase;
     padding: 7px 12px; border: 1px solid var(--hairline); background: var(--paper); color: var(--ink);
     cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.1s;
   }
@@ -424,7 +424,7 @@
   /* ── Save status ──────────────────────────────────────── */
   .save-bar {
     padding: 8px 16px; border-top: 1px solid var(--hairline);
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--graphite);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--graphite);
     display: flex; align-items: center; justify-content: space-between;
     background: var(--paper-alt);
   }
@@ -451,7 +451,8 @@
     <div class="topbar-title">AGRO ROVER <span>/ mission control</span></div>
   </div>
   <ul class="topbar-nav">
-    <li><a href="/">Dashboard</a></li>
+    <li><a href="/">Home</a></li>
+    <li><a href="/dashboard">Dashboard</a></li>
     <li><a href="/mission" class="active">Mission</a></li>
     <li><a href="/control">Drive</a></li>
   </ul>
@@ -467,7 +468,8 @@
 </div>
 
 <nav class="mobile-menu" id="mobileMenu">
-  <a href="/">Dashboard</a>
+  <a href="/">Home</a>
+  <a href="/dashboard">Dashboard</a>
   <a href="/mission">Mission</a>
   <a href="/control">Drive</a>
 </nav>
@@ -743,7 +745,7 @@ const openStreetMapTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{
 const satelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
   attribution: 'Tiles &copy; Esri, Maxar, Earthstar Geographics', maxZoom: 20, maxNativeZoom: 17
 });
-const roadmapTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+const roadmapTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 20
 });
 const topoTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
