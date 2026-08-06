@@ -440,6 +440,48 @@
     .map-overlay-br { right: 16px; bottom: calc(45vh + 12px); }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  .safety-row {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    padding: 0 14px 12px; border-bottom: 1px solid var(--hairline);
+  }
+  .batt-chip {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+    font-size: 0.72rem; color: var(--ink);
+    background: var(--paper-alt); border: 1px solid var(--hairline);
+    border-radius: 10px; padding: 6px 10px;
+  }
+  .batt-chip.low { color: var(--warn); border-color: var(--warn); }
+  .batt-chip.critical { color: #fff; background: var(--warn); border-color: var(--warn); }
+  .batt-ico { opacity: 0.7; }
+  .batt-bar {
+    width: 52px; height: 6px; border-radius: 99px;
+    background: var(--hairline); overflow: hidden;
+  }
+  .batt-fill {
+    display: block; height: 100%; width: 100%;
+    background: var(--green, #3dd68c);
+    transition: width 0.4s ease, background 0.3s;
+  }
+  .batt-chip.low .batt-fill { background: var(--orange, #f0b429); }
+  .batt-chip.critical .batt-fill { background: #fff; }
+  .stop-reason {
+    flex: 1; min-width: 140px;
+    font-size: 0.72rem; line-height: 1.35;
+    padding: 6px 10px; border-radius: 10px;
+    background: var(--warn-tint, rgba(240,113,103,0.12));
+    border: 1px solid var(--hairline);
+  }
+  .stop-reason.ok {
+    background: var(--green-tint, rgba(61,214,140,0.12));
+  }
+  .stop-label {
+    display: block; font-size: 0.62rem; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--graphite-lt); margin-bottom: 2px;
+  }
+  .stop-text { color: var(--ink); font-weight: 500; }
+
 </style>
 </head>
 <body>
@@ -517,6 +559,18 @@
       <span class="mono" style="font-size:0.68rem;color:var(--graphite-lt)" id="wpProgress">—</span>
     </div>
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="safety-row" id="safetyRow">
+      <div class="batt-chip" id="battChip" title="Battery">
+        <span class="batt-ico">▣</span>
+        <span id="battPct">—%</span>
+        <span class="batt-bar"><span class="batt-fill" id="battFill"></span></span>
+      </div>
+      <div class="stop-reason" id="stopReasonBox" style="display:none;">
+        <span class="stop-label">Stopped</span>
+        <span class="stop-text" id="stopReasonText">—</span>
+      </div>
+    </div>
 
     <!-- Live camera feed — separate from the periodic crop-health captures -->
     <div class="live-feed-panel">
@@ -1287,6 +1341,45 @@ function updateMissionUI() {
   badge.className = 'status-badge ' + s;
   badge.textContent = s.toUpperCase();
   mode.textContent = { patrol: 'Patrol mode', atob: 'A-to-B mode', zone: 'Zone coverage', return: 'Returning home' }[m] || m;
+
+  // Battery
+  const pct = missionState.battery_pct;
+  const battChip = document.getElementById('battChip');
+  const battPct = document.getElementById('battPct');
+  const battFill = document.getElementById('battFill');
+  if (pct != null && battPct) {
+    const p = Math.max(0, Math.min(100, Number(pct)));
+    battPct.textContent = p.toFixed(0) + '%';
+    battFill.style.width = p + '%';
+    battChip.classList.remove('low', 'critical');
+    if (missionState.battery_critical || p <= 8) battChip.classList.add('critical');
+    else if (missionState.battery_low || p <= 15) battChip.classList.add('low');
+    const src = missionState.battery_source ? ` (${missionState.battery_source})` : '';
+    battChip.title = 'Battery' + src + (missionState.battery_voltage != null ? ` · ${missionState.battery_voltage} V` : '');
+  }
+
+  // Stop reason
+  const box = document.getElementById('stopReasonBox');
+  const stopText = document.getElementById('stopReasonText');
+  const reason = missionState.stop_reason || '';
+  const detail = missionState.stop_detail || '';
+  if (box && stopText) {
+    if (reason && (s === 'aborted' || s === 'completed' || reason === 'battery')) {
+      box.style.display = '';
+      const labels = {
+        completed: 'Completed',
+        abort: 'Aborted',
+        battery: 'Battery',
+        obstacle: 'Obstacle',
+        timeout: 'Time limit',
+        gps_loss: 'GPS loss',
+      };
+      stopText.textContent = (labels[reason] || reason) + (detail ? ' — ' + detail : '');
+      box.classList.toggle('ok', reason === 'completed');
+    } else if (s === 'running' || s === 'idle' || s === 'paused') {
+      if (s === 'running') box.style.display = 'none';
+    }
+  }
 
   updateControlButtons(s);
   updateProgress();

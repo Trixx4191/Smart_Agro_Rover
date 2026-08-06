@@ -94,6 +94,17 @@ PATROL_INTERVAL_MIN = 120   # minutes between full patrols
 MAX_MISSION_TIME    = 240   # minutes — hard cutoff for battery safety
 SAMPLE_AT_WAYPOINT  = True  # force sensor sample + photo at each waypoint
 
+# ── Battery / mission safety ───────────────────────────────────
+# Prefer a live reading from Arduino JSON ("battery_pct" or "voltage").
+# If neither is present, fall back to a time-based estimate so the UI
+# always shows a percentage and low-battery abort still works.
+BATTERY_LOW_PCT          = 15    # abort mission at or below this %
+BATTERY_CRITICAL_PCT     = 8     # force estop / refuse status
+BATTERY_FULL_VOLTAGE     = 12.6  # pack voltage treated as 100% (e.g. 3S Li-ion)
+BATTERY_EMPTY_VOLTAGE    = 10.5  # pack voltage treated as 0%
+BATTERY_ESTIMATE_HOURS   = 4.0   # assumed runtime for estimate mode
+BATTERY_POLL_INTERVAL_S  = 5.0   # how often nav re-checks battery
+
 # ── Dashboard ──────────────────────────────────────────────────
 DASHBOARD_HOST  = "0.0.0.0"
 DASHBOARD_PORT  = 5000

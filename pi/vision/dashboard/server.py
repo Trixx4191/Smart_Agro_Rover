@@ -47,9 +47,17 @@ class DashboardServer:
             "speed": 150,
             "manual_mode": False,
             "readings_mode": True,
+            "stop_reason": "",      # completed|abort|battery|obstacle|timeout|gps_loss
+            "stop_detail": "",
+            "battery_pct": 100.0,
+            "battery_voltage": None,
+            "battery_source": "estimate",
+            "battery_low": False,
+            "battery_critical": False,
         }
         self._mission_lock = threading.Lock()
         self._patrol_thread = None
+        self.battery = None
 
         self._socketio = None   # set once run() creates it
         self._track_points = []
@@ -102,6 +110,28 @@ class DashboardServer:
             self._socketio = socketio
 
         VALID_DIRS = {"forward", "backward", "left", "right"}
+
+        # Battery monitor — shared with navigator when missions run
+        try:
+            from pi.sensors.battery_monitor import BatteryMonitor
+            self.battery = BatteryMonitor(arduino=arduino)
+            if nav is not None:
+                nav.battery = self.battery
+            # seed mission_state
+            self.update_mission_state(**self.battery.snapshot())
+        except Exception:
+            log.exception("BatteryMonitor init failed — continuing without it")
+
+        def _battery_tick():
+            while True:
+                try:
+                    if self.battery is not None:
+                        self.update_mission_state(**self.battery.snapshot())
+                except Exception:
+                    pass
+                time.sleep(5.0)
+
+        threading.Thread(target=_battery_tick, daemon=True).start()
 
         #  Pages 
 
@@ -278,6 +308,19 @@ class DashboardServer:
                 "mission_state": state_copy,
             })
 
+        @app.route("/api/mission/events")
+        def api_mission_events():
+            try:
+                return jsonify(logger.get_mission_events(30))
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        @app.route("/api/battery")
+        def api_battery():
+            if self.battery is None:
+                return jsonify({"battery_pct": None, "error": "no battery monitor"}), 503
+            return jsonify(self.battery.snapshot())
+
         #  Mission control ─
 
         @app.route("/api/mission/start", methods=["POST"])
@@ -313,9 +356,12 @@ class DashboardServer:
                     pass
 
             arduino.reset_estop()
+            if nav.battery is None and self.battery is not None:
+                nav.battery = self.battery
             self.update_mission_state(
                 status="running", mode=mode, current_wp=0,
                 total_wp=len(waypoints), speed=nav.speed_cruise,
+                stop_reason="", stop_detail="",
             )
 
             def _run():
@@ -323,7 +369,11 @@ class DashboardServer:
                     nav.run_patrol(loops=0 if mode == "patrol" else 1)
                 except Exception:
                     log.exception("Mission thread crashed")
-                    self.update_mission_state(status="aborted")
+                    self.update_mission_state(
+                        status="aborted",
+                        stop_reason="abort",
+                        stop_detail="Mission thread crashed",
+                    )
 
             self._patrol_thread = threading.Thread(target=_run, daemon=True)
             self._patrol_thread.start()
@@ -353,8 +403,8 @@ class DashboardServer:
             payload = request.get_json(silent=True) or {}
             return_home = bool(payload.get("return_home"))
 
-            nav.abort()
-            self.update_mission_state(status="aborted")
+            nav.abort(reason="abort", detail="Operator abort from mission control")
+            # nav.abort already updates mission_state + logs event
 
             if return_home:
                 from pi.config import HOME_POSITION

@@ -95,8 +95,90 @@ class DataLogger:
         self._db_conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_timestamp ON readings(timestamp)
         """)
+        self._db_conn.execute("""
+            CREATE TABLE IF NOT EXISTS mission_events (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp    REAL,
+                datetime     TEXT,
+                event        TEXT,
+                reason       TEXT,
+                detail       TEXT,
+                mode         TEXT,
+                status       TEXT,
+                battery_pct  REAL,
+                current_wp   INTEGER,
+                total_wp     INTEGER,
+                latitude     REAL,
+                longitude    REAL
+            )
+        """)
+        self._db_conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_mission_events_ts
+            ON mission_events(timestamp)
+        """)
         self._db_conn.commit()
         log.info(f"DataLogger: SQLite → {self.db_path}")
+
+    def log_mission_event(
+        self,
+        event: str,
+        reason: str = "",
+        detail: str = "",
+        mode: str = "",
+        status: str = "",
+        battery_pct: Optional[float] = None,
+        current_wp: Optional[int] = None,
+        total_wp: Optional[int] = None,
+        gps_coords: Optional[Tuple[float, float]] = None,
+    ):
+        """
+        Persist why a mission started / stopped / failed.
+
+        reason examples: completed | abort | battery | obstacle | timeout | gps_loss
+        """
+        ts = time.time()
+        dt = datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+        lat = gps_coords[0] if gps_coords else None
+        lon = gps_coords[1] if gps_coords else None
+        row = {
+            "timestamp": ts,
+            "datetime": dt,
+            "event": event,
+            "reason": reason or "",
+            "detail": detail or "",
+            "mode": mode or "",
+            "status": status or "",
+            "battery_pct": battery_pct,
+            "current_wp": current_wp,
+            "total_wp": total_wp,
+            "latitude": lat,
+            "longitude": lon,
+        }
+        try:
+            self._db_conn.execute("""
+                INSERT INTO mission_events (
+                    timestamp, datetime, event, reason, detail, mode, status,
+                    battery_pct, current_wp, total_wp, latitude, longitude
+                ) VALUES (
+                    :timestamp, :datetime, :event, :reason, :detail, :mode, :status,
+                    :battery_pct, :current_wp, :total_wp, :latitude, :longitude
+                )
+            """, row)
+            self._db_conn.commit()
+            log.info(
+                f"Mission event: {event} reason={reason or '—'} "
+                f"battery={battery_pct} detail={detail or '—'}"
+            )
+        except Exception as e:
+            log.error(f"DataLogger: mission_event write error — {e}")
+
+    def get_mission_events(self, n: int = 20) -> list:
+        cur = self._db_conn.execute(
+            "SELECT * FROM mission_events ORDER BY timestamp DESC LIMIT ?",
+            (n,),
+        )
+        cols = [d[0] for d in cur.description]
+        return [dict(zip(cols, row)) for row in cur.fetchall()]
 
     # ── Core log method ───────────────────────────────────────
 

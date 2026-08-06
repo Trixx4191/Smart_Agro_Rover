@@ -53,9 +53,19 @@ class WaypointNavigator:
         self._mode         = "patrol"   # patrol | atob | zone | return
         self._on_arrival: Optional[Callable] = None
 
+        # Mission safety / stop accounting
+        self._stop_reason: str = ""       # completed|abort|battery|obstacle|timeout|gps_loss
+        self._stop_detail: str = ""
+        self._mission_started_at: Optional[float] = None
+        self._last_battery_check: float = 0.0
+        self._obstacle_strikes: int = 0
+        self._stop_logged: bool = False
+        self.battery = None               # optional BatteryMonitor, set by mission/server
+
         from pi.config import (
             WAYPOINT_RADIUS, SPEED_CRUISE, SPEED_TURN,
-            SPEED_SLOW, OBSTACLE_DIST_CM, SAMPLE_AT_WAYPOINT
+            SPEED_SLOW, OBSTACLE_DIST_CM, SAMPLE_AT_WAYPOINT,
+            MAX_MISSION_TIME, BATTERY_POLL_INTERVAL_S,
         )
         self.waypoint_radius  = WAYPOINT_RADIUS
         self.speed_cruise     = SPEED_CRUISE
@@ -63,6 +73,9 @@ class WaypointNavigator:
         self.speed_slow       = SPEED_SLOW
         self.obstacle_dist    = OBSTACLE_DIST_CM
         self.sample_at_wp     = SAMPLE_AT_WAYPOINT
+        self.max_mission_sec  = MAX_MISSION_TIME * 60
+        self.battery_poll_s   = BATTERY_POLL_INTERVAL_S
+        self.max_obstacle_strikes = 5
 
     # ── Setup ─────────────────────────────────────────────────
 
@@ -122,11 +135,105 @@ class WaypointNavigator:
         self._notify_dashboard(status="running")
         log.info("Navigator: resumed")
 
-    def abort(self):
+    def abort(self, reason: str = "abort", detail: str = "Operator abort / e-stop"):
+        """Stop mission and record why."""
+        if not self._stop_reason:
+            self._stop_reason = reason
+            self._stop_detail = detail
         self._running = False
-        self.arduino.estop()
-        self._notify_dashboard(status="aborted")
-        log.warning("Navigator: aborted — eStop triggered")
+        try:
+            self.arduino.estop()
+        except Exception:
+            try:
+                self.arduino.stop()
+            except Exception:
+                pass
+        self._finish_mission(status="aborted")
+        log.warning(f"Navigator: aborted — {reason}: {detail}")
+
+    def _finish_mission(self, status: str):
+        """Push final state + persist stop reason once."""
+        if not self._stop_reason:
+            if status == "completed":
+                self._stop_reason = "completed"
+                self._stop_detail = "All waypoints finished"
+            else:
+                self._stop_reason = status
+                self._stop_detail = self._stop_detail or status
+
+        bat = self._battery_snapshot()
+        self._notify_dashboard(
+            status=status,
+            stop_reason=self._stop_reason,
+            stop_detail=self._stop_detail,
+            **bat,
+        )
+        if not self._stop_logged:
+            self._stop_logged = True
+            self._log_stop_event(status)
+
+    def _battery_snapshot(self) -> Dict[str, Any]:
+        if self.battery is None:
+            return {}
+        try:
+            return self.battery.snapshot()
+        except Exception:
+            return {}
+
+    def _log_stop_event(self, status: str):
+        if self.logger is None:
+            return
+        gps = (None, None)
+        try:
+            if self.gps is not None:
+                gps = self.gps.position()
+        except Exception:
+            pass
+        bat = self._battery_snapshot()
+        try:
+            self.logger.log_mission_event(
+                event="mission_stop",
+                reason=self._stop_reason,
+                detail=self._stop_detail,
+                mode=self._mode,
+                status=status,
+                battery_pct=bat.get("battery_pct"),
+                current_wp=self._current_wp,
+                total_wp=len(self._waypoints),
+                gps_coords=gps if gps[0] is not None else None,
+            )
+        except Exception as e:
+            log.error(f"Navigator: failed to log mission stop — {e}")
+
+    def _safety_should_stop(self) -> bool:
+        """Battery + max mission time checks. Returns True if mission must end."""
+        now = time.time()
+
+        # Time limit
+        if self._mission_started_at and self.max_mission_sec > 0:
+            elapsed = now - self._mission_started_at
+            if elapsed >= self.max_mission_sec:
+                self._stop_reason = "timeout"
+                self._stop_detail = (
+                    f"Max mission time reached ({int(elapsed/60)} min)"
+                )
+                return True
+
+        # Battery
+        if self.battery is not None and (now - self._last_battery_check) >= self.battery_poll_s:
+            self._last_battery_check = now
+            try:
+                snap = self.battery.snapshot()
+                self._notify_dashboard(**snap)
+                if self.battery.is_critical() or self.battery.is_low():
+                    pct = snap.get("battery_pct", 0)
+                    self._stop_reason = "battery"
+                    self._stop_detail = f"Battery low ({pct}%) — mission halted"
+                    return True
+            except Exception as e:
+                log.error(f"Navigator: battery check failed — {e}")
+
+        return False
 
     # ── Main patrol loop ──────────────────────────────────────
 
@@ -141,30 +248,87 @@ class WaypointNavigator:
             return
 
         self._running = True
-        self._notify_dashboard(status="running", mode=self._mode)
+        self._paused = False
+        self._stop_reason = ""
+        self._stop_detail = ""
+        self._stop_logged = False
+        self._obstacle_strikes = 0
+        self._mission_started_at = time.time()
+        self._last_battery_check = 0.0
+        if self.battery is not None:
+            try:
+                self.battery.start_mission()
+            except Exception:
+                pass
+
+        bat = self._battery_snapshot()
+        self._notify_dashboard(
+            status="running", mode=self._mode,
+            stop_reason="", stop_detail="",
+            **bat,
+        )
+        if self.logger is not None:
+            try:
+                self.logger.log_mission_event(
+                    event="mission_start",
+                    reason="start",
+                    detail=f"mode={self._mode} waypoints={len(self._waypoints)}",
+                    mode=self._mode,
+                    status="running",
+                    battery_pct=bat.get("battery_pct"),
+                    current_wp=0,
+                    total_wp=len(self._waypoints),
+                )
+            except Exception:
+                pass
+
         lap = 0
-
-        while self._running:
-            if self._mode in ("atob", "zone"):
-                # One-way: drive through once, then stop
-                self._run_single_pass()
-                break
-            elif self._mode == "return":
-                self._run_return_home()
-                break
-            else:
-                # Patrol mode: loop
-                if loops > 0 and lap >= loops:
+        try:
+            while self._running:
+                if self._safety_should_stop():
+                    self._running = False
                     break
-                log.info(f"Navigator: starting lap {lap + 1}")
-                self._run_single_pass()
-                lap += 1
-                self._notify_dashboard(loops_done=lap)
-                log.info(f"Navigator: lap {lap} complete")
 
-        self.arduino.stop()
-        self._notify_dashboard(status="completed")
-        log.info("Navigator: patrol complete")
+                if self._mode in ("atob", "zone"):
+                    self._run_single_pass()
+                    break
+                elif self._mode == "return":
+                    self._run_return_home()
+                    break
+                else:
+                    if loops > 0 and lap >= loops:
+                        break
+                    log.info(f"Navigator: starting lap {lap + 1}")
+                    self._run_single_pass()
+                    if not self._running:
+                        break
+                    lap += 1
+                    self._notify_dashboard(loops_done=lap)
+                    log.info(f"Navigator: lap {lap} complete")
+        finally:
+            try:
+                self.arduino.stop()
+            except Exception:
+                pass
+
+            if self._stop_reason in ("battery", "timeout", "obstacle", "gps_loss"):
+                status = "aborted"
+            elif self._stop_reason == "abort":
+                status = "aborted"
+            elif not self._running and self._stop_reason:
+                status = "aborted" if self._stop_reason != "completed" else "completed"
+            else:
+                # Natural finish
+                if not self._stop_reason:
+                    self._stop_reason = "completed"
+                    self._stop_detail = "All waypoints finished"
+                status = "completed"
+
+            self._finish_mission(status=status)
+            log.info(
+                f"Navigator: mission ended status={status} "
+                f"reason={self._stop_reason} detail={self._stop_detail}"
+            )
 
     def _run_single_pass(self):
         """Drive through all waypoints once."""
@@ -204,8 +368,8 @@ class WaypointNavigator:
         self._notify_dashboard(current_wp=0, total_wp=1)
         log.info(f"Navigator: returning home to ({home['lat']:.6f}, {home['lon']:.6f})")
         self._drive_to(home_wp)
-        self._at_waypoint(home_wp)
-        self._notify_dashboard(status="completed")
+        if self._running:
+            self._at_waypoint(home_wp)
 
     # ── Navigation logic ──────────────────────────────────────
 
@@ -221,8 +385,14 @@ class WaypointNavigator:
         wp_speed = wp.get("speed", self.speed_cruise)
         steer_threshold = 15    # degrees — when to correct heading
         slow_radius     = 3.0   # metres — slow down near waypoint
+        no_fix_since = None
 
         while self._running:
+            if self._safety_should_stop():
+                self._running = False
+                self.arduino.stop()
+                return
+
             # Wait through pause
             if self._paused:
                 self.arduino.stop()
@@ -231,10 +401,19 @@ class WaypointNavigator:
 
             lat, lon = self.gps.position()
             if lat is None:
+                if no_fix_since is None:
+                    no_fix_since = time.time()
                 log.warning("Navigator: no GPS fix — waiting")
                 self.arduino.stop()
+                # Give up after 90s without a fix mid-leg
+                if time.time() - no_fix_since > 90:
+                    self._stop_reason = "gps_loss"
+                    self._stop_detail = "No GPS fix for 90s during navigation"
+                    self._running = False
+                    return
                 time.sleep(1)
                 continue
+            no_fix_since = None
 
             dist    = haversine_distance(lat, lon, target_lat, target_lon)
             bearing = bearing_to(lat, lon, target_lat, target_lon)
@@ -270,14 +449,31 @@ class WaypointNavigator:
 
             # Check sensor data for obstacles
             data = self.arduino.latest()
-            if data.get("us_front", 999) < self.obstacle_dist:
-                log.warning("Navigator: obstacle — stopping to reassess")
+            us = data.get("us_front")
+            if us is not None and us != 999 and us < self.obstacle_dist:
+                self._obstacle_strikes += 1
+                log.warning(
+                    f"Navigator: obstacle at {us} cm "
+                    f"(strike {self._obstacle_strikes}/{self.max_obstacle_strikes})"
+                )
                 self.arduino.stop()
                 time.sleep(1.5)
+                if self._obstacle_strikes >= self.max_obstacle_strikes:
+                    self._stop_reason = "obstacle"
+                    self._stop_detail = (
+                        f"Repeated obstacle detections ({self._obstacle_strikes}) "
+                        f"at {us} cm — mission halted"
+                    )
+                    self._running = False
+                    return
                 # Try to go around — nudge left and re-evaluate
                 self.arduino.move("left", self.speed_turn)
                 time.sleep(0.8)
                 self.arduino.stop()
+            else:
+                # clear strike streak when path is open
+                if self._obstacle_strikes > 0 and (us is None or us >= self.obstacle_dist * 2):
+                    self._obstacle_strikes = max(0, self._obstacle_strikes - 1)
 
             time.sleep(0.1)   # 10Hz navigation loop
 
