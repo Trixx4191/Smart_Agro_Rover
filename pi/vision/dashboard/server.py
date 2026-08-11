@@ -47,13 +47,11 @@ class DashboardServer:
             "speed": 150,
             "manual_mode": False,
             "readings_mode": True,
-            "stop_reason": "",      # completed|abort|battery|obstacle|timeout|gps_loss
+            "stop_reason": "",      # completed|abort|obstacle|timeout|gps_loss
             "stop_detail": "",
-            "battery_pct": 100.0,
+            "battery_pct": None,      # display only — never used to stop missions
             "battery_voltage": None,
             "battery_source": "estimate",
-            "battery_low": False,
-            "battery_critical": False,
         }
         self._mission_lock = threading.Lock()
         self._patrol_thread = None
@@ -93,8 +91,15 @@ class DashboardServer:
             log.error("Falling back to plain Flask — /mission live tracking won't work")
             SocketIO = None
 
-        template_dir = os.path.join(os.path.dirname(__file__), "templates")
-        app = Flask(__name__, template_folder=template_dir)
+        _dash_dir = os.path.dirname(__file__)
+        template_dir = os.path.join(_dash_dir, "templates")
+        static_dir = os.path.join(_dash_dir, "static")
+        app = Flask(
+            __name__,
+            template_folder=template_dir,
+            static_folder=static_dir,
+            static_url_path="/static",
+        )
 
         logger  = self.logger
         arduino = self.arduino
@@ -111,27 +116,31 @@ class DashboardServer:
 
         VALID_DIRS = {"forward", "backward", "left", "right"}
 
-        # Battery monitor — shared with navigator when missions run
+        # Battery monitor — display only. Never aborts missions.
         try:
             from pi.sensors.battery_monitor import BatteryMonitor
             self.battery = BatteryMonitor(arduino=arduino)
-            if nav is not None:
-                nav.battery = self.battery
-            # seed mission_state
             self.update_mission_state(**self.battery.snapshot())
         except Exception:
             log.exception("BatteryMonitor init failed — continuing without it")
+            self.battery = None
 
         def _battery_tick():
             while True:
                 try:
                     if self.battery is not None:
-                        self.update_mission_state(**self.battery.snapshot())
+                        snap = self.battery.snapshot()
+                        # strip low/critical flags so UI never implies a kill switch
+                        snap.pop("battery_low", None)
+                        snap.pop("battery_critical", None)
+                        self.update_mission_state(**snap)
                 except Exception:
                     pass
                 time.sleep(5.0)
 
         threading.Thread(target=_battery_tick, daemon=True).start()
+
+
 
         #  Pages 
 
@@ -190,62 +199,104 @@ class DashboardServer:
                 return jsonify({"error": "arduino stop command send failed"}), 503
             return jsonify({"ok": True})
 
-        @app.route("/api/control/capture", methods=["POST"])
-        def api_control_capture():
-            self.update_mission_state(
-                manual_mode=True,
-                readings_mode=False,
-                status="capture"
-            )
+        def _gps_coords():
+            if gps is None:
+                return None
+            try:
+                lat, lon = gps.position()
+                if lat is None:
+                    return None
+                return (lat, lon)
+            except Exception:
+                return None
 
+        def _latest_sensors():
+            if arduino is None:
+                return {}
+            try:
+                return arduino.latest() or {}
+            except Exception:
+                return {}
+
+        def _log_reading(with_photo: bool = False):
+            """Log one sensor packet; optional camera still."""
             if arduino is not None:
                 try:
-                    if not arduino.request_sample():
-                        return jsonify({"error": "arduino capture command send failed"}), 503
-                except Exception as exc:
-                    log.exception("Capture request failed")
-                    return jsonify({"error": str(exc)}), 500
-
-            latest = arduino.latest() if arduino is not None else {
-                "moisture": [0, 0],
-                "soil_temp": [0.0, 0.0],
-                "air_temp": 0.0,
-                "humidity": 0.0,
-                "pressure": 0.0,
-                "us_front": 0,
-                "us_rear": 0,
-                "enc": [0, 0, 0, 0],
-            }
-
-            if vision is not None:
+                    arduino.request_sample()
+                    time.sleep(0.15)
+                except Exception:
+                    pass
+            latest = _latest_sensors()
+            image_path = None
+            stress_flag = False
+            stress_score = 0.0
+            if with_photo and vision is not None:
                 try:
                     image_path, stress_flag, stress_score = vision.capture_and_analyze()
-                    if logger is not None:
-                        logger.log(
-                            latest,
-                            gps_coords=(gps.position()[0], gps.position()[1]) if gps is not None else None,
-                            image_path=image_path,
-                            stress_flag=stress_flag,
-                            stress_score=stress_score,
-                        )
                 except Exception:
-                    log.exception("Capture image analysis failed")
-            elif logger is not None:
+                    log.exception("Photo capture failed")
+            if logger is not None:
                 try:
-                    logger.log(latest, gps_coords=(gps.position()[0], gps.position()[1]) if gps is not None else None)
+                    logger.log(
+                        latest,
+                        gps_coords=_gps_coords(),
+                        image_path=image_path,
+                        stress_flag=stress_flag,
+                        stress_score=stress_score,
+                    )
                 except Exception:
-                    log.exception("Capture logging failed")
+                    log.exception("Reading log failed")
+            return {
+                "ok": True,
+                "sensors": latest,
+                "image_path": image_path,
+                "stress_flag": stress_flag,
+                "stress_score": stress_score,
+                "gps": _gps_coords(),
+            }
 
-            return jsonify({"ok": True})
+        @app.route("/api/control/sample", methods=["POST"])
+        def api_control_sample():
+            """Sensors only — fast path for continuous field logging while driving."""
+            self.update_mission_state(manual_mode=True, status="sampling")
+            return jsonify(_log_reading(with_photo=False))
+
+        @app.route("/api/control/photo", methods=["POST"])
+        def api_control_photo():
+            """Take a photo + log sensors at the current spot."""
+            self.update_mission_state(manual_mode=True, status="photo")
+            return jsonify(_log_reading(with_photo=True))
+
+        @app.route("/api/control/capture", methods=["POST"])
+        def api_control_capture():
+            """Backward compatible: photo + sensors."""
+            self.update_mission_state(manual_mode=True, status="capture")
+            return jsonify(_log_reading(with_photo=True))
 
         #  Live rover GPS (on-demand, used by the "Rover GPS" waypoint button) 
 
         @app.route("/api/gps/current", methods=["GET"])
         def api_gps_current():
             if gps is None:
-                return jsonify({"error": "no gps handler attached", "has_fix": False}), 503
+                return jsonify({
+                    "error": "no gps handler attached",
+                    "has_fix": False, "lat": None, "lon": None,
+                }), 503
             lat, lon = gps.position()
-            return jsonify({"lat": lat, "lon": lon, "has_fix": gps.has_fix()})
+            info = {}
+            try:
+                if hasattr(gps, "status"):
+                    info = gps.status() or {}
+            except Exception:
+                info = {}
+            return jsonify({
+                "lat": lat,
+                "lon": lon,
+                "has_fix": bool(gps.has_fix() and lat is not None and lon is not None),
+                "sats": info.get("sats"),
+                "quality": info.get("quality"),
+                "fix_count": info.get("fix_count"),
+            })
 
         #  Waypoints — accepts both the simple {lat,lon,label} shape from
         #  dashboard.html and the rich {lat,lon,label,action,speed,
@@ -319,7 +370,11 @@ class DashboardServer:
         def api_battery():
             if self.battery is None:
                 return jsonify({"battery_pct": None, "error": "no battery monitor"}), 503
-            return jsonify(self.battery.snapshot())
+            snap = self.battery.snapshot()
+            # display only
+            snap["mission_abort_on_low"] = False
+            return jsonify(snap)
+
 
         #  Mission control ─
 
@@ -356,8 +411,6 @@ class DashboardServer:
                     pass
 
             arduino.reset_estop()
-            if nav.battery is None and self.battery is not None:
-                nav.battery = self.battery
             self.update_mission_state(
                 status="running", mode=mode, current_wp=0,
                 total_wp=len(waypoints), speed=nav.speed_cruise,
@@ -484,6 +537,53 @@ class DashboardServer:
         @app.route("/api/stress")
         def api_stress():
             return jsonify(logger.get_stress_events())
+
+        # ── CSV downloads (all gathered field data) ────────────
+        @app.route("/api/export/readings.csv")
+        def api_export_readings_csv():
+            from flask import Response
+            from datetime import datetime as _dt
+            body = logger.export_readings_csv()
+            fname = f"rover_readings_{_dt.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            return Response(
+                body,
+                mimetype="text/csv",
+                headers={
+                    "Content-Disposition": f'attachment; filename="{fname}"',
+                    "Content-Type": "text/csv; charset=utf-8",
+                },
+            )
+
+        @app.route("/api/export/mission_events.csv")
+        def api_export_missions_csv():
+            from flask import Response
+            from datetime import datetime as _dt
+            body = logger.export_mission_events_csv()
+            fname = f"rover_missions_{_dt.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            return Response(
+                body,
+                mimetype="text/csv",
+                headers={
+                    "Content-Disposition": f'attachment; filename="{fname}"',
+                    "Content-Type": "text/csv; charset=utf-8",
+                },
+            )
+
+        @app.route("/api/export/sessions")
+        def api_export_sessions_list():
+            return jsonify(logger.list_session_csvs())
+
+        @app.route("/api/export/session/<path:filename>")
+        def api_export_session_file(filename):
+            from pi.config import LOG_DIR
+            # only allow session_*.csv basename
+            base = os.path.basename(filename)
+            if not (base.startswith("session_") and base.endswith(".csv")):
+                return jsonify({"error": "invalid file"}), 400
+            path = os.path.join(LOG_DIR, base)
+            if not os.path.isfile(path):
+                return jsonify({"error": "not found"}), 404
+            return send_from_directory(LOG_DIR, base, as_attachment=True)
 
         @app.route("/images/<path:filename>")
         def serve_image(filename):

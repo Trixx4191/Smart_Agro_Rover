@@ -1,0 +1,465 @@
+/*
+ * ============================================================
+ *  AUTONOMOUS FARM ROVER — Arduino Nano Firmware
+ *  Layer: Reflex (real-time sensors + motor control)
+ *  Board: Arduino Nano (ATmega328P)
+ *  Comms: USB Serial → Raspberry Pi @ 115200 baud  (D0/D1 — do not reuse)
+ *
+ *  4WD skid-steer, 2x L298N drivers, each motor independently
+ *  wired (no jumpers) — software still commands both motors on
+ *  a side together, but hardware allows per-wheel control later.
+ *
+ *  ── Pin map ─────────────────────────────────────────────────
+ *  Driver 1 (LEFT)   front-left:  ENA=D3(PWM) IN1=D4  IN2=D13
+ *                     rear-left:   ENB=D5(PWM) IN3=D7  IN4=D12
+ *  Driver 2 (RIGHT)  front-right: ENA=D6(PWM) IN1=D8  IN2=D2
+ *                     rear-right:  ENB=D9(PWM) IN3=D10 IN4=D11
+ *  Ultrasonic   TRIG=A0 (shared front+rear)  FRONT_ECHO=A1  REAR_ECHO=A2
+ *  DHT22        DATA=A3
+ *  Soil moisture (1 probe) A6
+ *  BME280       I2C — SDA=A4  SCL=A5 (fixed)
+ *  D0/D1 reserved for Pi serial — every other digital pin D2-D13
+ *  is used by motors; nothing free there. Add-ons later must
+ *  come off the analog pool or share/replace a motor pin.
+ *  ────────────────────────────────────────────────────────────
+ *
+ *  ── What's physically wired right now ──────────────────────
+ *  HAS_MOTORS      = true   (drivers not confirmed wired yet)
+ *  HAS_US_FRONT    = true
+ *  HAS_US_REAR     = true
+ *  HAS_DHT22       = true
+ *  HAS_MOISTURE    = false
+ *  BME280 self-detects at boot — no flag needed, reports null
+ *  until wired.
+ *
+ *  Flip a flag to `true` once you've wired that part and
+ *  re-upload — nothing else needs to change.
+ *  ────────────────────────────────────────────────────────────
+ *
+ *  Commands received from Pi (newline-terminated JSON):
+ *    {"cmd":"move","dir":"forward","speed":150}
+ *    {"cmd":"move","dir":"backward","speed":150}
+ *    {"cmd":"move","dir":"left","speed":120}
+ *    {"cmd":"move","dir":"right","speed":120}
+ *    {"cmd":"stop"}
+ *    {"cmd":"sample"}   → force immediate sensor read + send
+ *    {"cmd":"estop"}    → emergency stop, lock motors until reset
+ *    {"cmd":"reset"}    → clear e-stop lock
+ *
+ *  Output to Pi every SAMPLE_INTERVAL ms (JSON). Fields for
+ *  parts that aren't wired yet come through as null:
+ *    {
+ *      "moisture":val,
+ *      "air_temp":null, "humidity":null, "pressure":null,
+ *      "dht_temp":null, "dht_humidity":null,
+ *      "us_front":null, "us_rear":null,
+ *      "estop":false, "dir":"stop", "speed":0
+ *    }
+ * ============================================================
+ */
+
+#define SERIAL_TEST_ONLY false
+
+#if SERIAL_TEST_ONLY
+
+void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println("BOOT:serial_test_mode");
+  Serial.println("BOOT:firmware_started");
+  Serial.println("BOOT:serial_ready");
+}
+
+void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(200);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(800);
+  Serial.println("LOOP:heartbeat");
+}
+
+#else
+
+#include <Wire.h>
+#include <Adafruit_BME280.h>
+#include <DHT.h>
+#include <ArduinoJson.h>
+
+//  What's physically installed — flip these as you wire more hardware 
+#define HAS_MOTORS       true
+#define HAS_US_FRONT     false
+#define HAS_US_REAR      false
+#define HAS_DHT22        false
+#define HAS_MOISTURE     false
+
+// Motor polarity helpers — set these to true only if a side is wired
+// opposite to the command logic. The direct hardware test used the same
+// direction for all four motors, so keep both false here.
+#define LEFT_MOTOR_INVERT   false
+#define RIGHT_MOTOR_INVERT  false
+
+//  Pin Definitions — matches the wiring guide above 
+// Motors (2x L298N, each motor independently wired — no jumpers)
+#define FL_ENA      3    // PWM — front-left speed
+#define FL_IN1      4
+#define FL_IN2      13
+#define RL_ENB      5    // PWM — rear-left speed
+#define RL_IN3      7
+#define RL_IN4      12
+
+#define FR_ENA      6    // PWM — front-right speed
+#define FR_IN1      8
+#define FR_IN2      2
+#define RR_ENB      9    // PWM — rear-right speed
+#define RR_IN3      10
+#define RR_IN4      11
+
+// Ultrasonics — TRIG shared between front and rear, fired sequentially
+#define US_TRIG         A0
+#define US_FRONT_ECHO   A1
+#define US_REAR_ECHO    A2
+
+// DHT22
+#define DHT_PIN     A3
+#define DHT_TYPE    DHT22
+
+// BME280 — I2C (Nano hardware I2C is fixed to A4/A5) — self-detects
+
+// Soil moisture (analog) — single probe
+#define MOISTURE_PIN    A6
+
+//  Timing 
+#define SAMPLE_INTERVAL   2000   // ms between sensor broadcasts
+#define US_TIMEOUT        30000  // µs — ~5m max range
+#define OBSTACLE_DIST_CM  20     // auto-stop if closer than this (front)
+#define SERIAL_BAUD       115200
+#define DEBUG_SERIAL      true
+
+//  Sensor Objects 
+Adafruit_BME280   bme;
+DHT                dht(DHT_PIN, DHT_TYPE);
+
+//  State Variables 
+bool  eStop         = false;
+bool  bmeAvailable  = false;
+int   currentSpeed  = 0;
+char  currentDir[12] = "stop";
+
+unsigned long lastSampleTime = 0;
+
+//  Setup 
+void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(200);
+  digitalWrite(LED_BUILTIN, LOW);
+
+  Serial.begin(SERIAL_BAUD);
+  delay(1000);
+  Serial.println("BOOT:firmware_started");
+  Serial.println("BOOT:serial_ready");
+  Serial.setTimeout(1000);
+
+#if HAS_MOTORS
+  pinMode(FL_ENA, OUTPUT); pinMode(FL_IN1, OUTPUT); pinMode(FL_IN2, OUTPUT);
+  pinMode(RL_ENB, OUTPUT); pinMode(RL_IN3, OUTPUT); pinMode(RL_IN4, OUTPUT);
+  pinMode(FR_ENA, OUTPUT); pinMode(FR_IN1, OUTPUT); pinMode(FR_IN2, OUTPUT);
+  pinMode(RR_ENB, OUTPUT); pinMode(RR_IN3, OUTPUT); pinMode(RR_IN4, OUTPUT);
+  stopMotors();
+#endif
+
+#if HAS_US_FRONT || HAS_US_REAR
+  pinMode(US_TRIG, OUTPUT);
+#endif
+#if HAS_US_FRONT
+  pinMode(US_FRONT_ECHO, INPUT);
+#endif
+#if HAS_US_REAR
+  pinMode(US_REAR_ECHO,  INPUT);
+#endif
+
+#if HAS_DHT22
+  dht.begin();
+#endif
+
+  // BME280 — self-detects, default address 0x76 (some modules use 0x77)
+  bmeAvailable = bme.begin(0x76);
+  if (!bmeAvailable) {
+    bmeAvailable = bme.begin(0x77);
+  }
+
+  // Ready signal to Pi
+  Serial.print("{\"status\":\"ready\",\"fw\":\"2.0.0\",");
+  Serial.print("\"has_motors\":");    Serial.print(HAS_MOTORS ? "true" : "false");
+  Serial.print(",\"has_us_front\":"); Serial.print(HAS_US_FRONT ? "true" : "false");
+  Serial.print(",\"has_us_rear\":");  Serial.print(HAS_US_REAR ? "true" : "false");
+  Serial.print(",\"has_dht22\":");    Serial.print(HAS_DHT22 ? "true" : "false");
+  Serial.print(",\"has_moisture\":"); Serial.print(HAS_MOISTURE ? "true" : "false");
+  Serial.print(",\"has_bme280\":");   Serial.print(bmeAvailable ? "true" : "false");
+  Serial.println("}");
+}
+
+//  Main Loop 
+void loop() {
+  if (Serial.available()) {
+    handleSerialCommand();
+  }
+
+  // Keep the serial buffer from starving the loop while waiting for commands.
+  if (millis() - lastSampleTime > 5000) {
+    Serial.println("{\"debug\":\"heartbeat\"}");
+    lastSampleTime = millis();
+  }
+
+  int frontDist = -1;
+#if HAS_US_FRONT
+  frontDist = readUltrasonic(US_TRIG, US_FRONT_ECHO);
+#if HAS_MOTORS
+  if (frontDist > 0 && frontDist < OBSTACLE_DIST_CM && !eStop) {
+    stopMotors();
+    strcpy(currentDir, "stop");
+    Serial.print("{\"alert\":\"obstacle\",\"dist_cm\":");
+    Serial.print(frontDist);
+    Serial.println("}");
+  }
+#endif
+#endif
+
+  unsigned long now = millis();
+  if (now - lastSampleTime >= SAMPLE_INTERVAL) {
+    lastSampleTime = now;
+    broadcastSensorData(frontDist);
+  }
+}
+
+//  Motor Control (no-ops until HAS_MOTORS is true — safe to call either way) 
+
+void setLeftMotors(bool forward, int speed) {
+#if HAS_MOTORS
+  bool dir = LEFT_MOTOR_INVERT ? !forward : forward;
+  digitalWrite(FL_IN1, dir ? HIGH : LOW);
+  digitalWrite(FL_IN2, dir ? LOW  : HIGH);
+  analogWrite(FL_ENA, speed);
+
+  digitalWrite(RL_IN3, dir ? HIGH : LOW);
+  digitalWrite(RL_IN4, dir ? LOW  : HIGH);
+  analogWrite(RL_ENB, speed);
+#endif
+}
+
+void setRightMotors(bool forward, int speed) {
+#if HAS_MOTORS
+  bool dir = RIGHT_MOTOR_INVERT ? !forward : forward;
+  digitalWrite(FR_IN1, dir ? HIGH : LOW);
+  digitalWrite(FR_IN2, dir ? LOW  : HIGH);
+  analogWrite(FR_ENA, speed);
+
+  digitalWrite(RR_IN3, dir ? HIGH : LOW);
+  digitalWrite(RR_IN4, dir ? LOW  : HIGH);
+  analogWrite(RR_ENB, speed);
+#endif
+}
+
+void stopMotors() {
+#if HAS_MOTORS
+  digitalWrite(FL_IN1, LOW); digitalWrite(FL_IN2, LOW); analogWrite(FL_ENA, 0);
+  digitalWrite(RL_IN3, LOW); digitalWrite(RL_IN4, LOW); analogWrite(RL_ENB, 0);
+  digitalWrite(FR_IN1, LOW); digitalWrite(FR_IN2, LOW); analogWrite(FR_ENA, 0);
+  digitalWrite(RR_IN3, LOW); digitalWrite(RR_IN4, LOW); analogWrite(RR_ENB, 0);
+#endif
+}
+
+void moveForward(int speed)  { setLeftMotors(true,  speed); setRightMotors(true, speed); }
+void moveBackward(int speed) { setLeftMotors(false, speed); setRightMotors(false, speed); }
+void turnLeft(int speed)     { setLeftMotors(false, speed); setRightMotors(true, speed); }
+void turnRight(int speed)    { setLeftMotors(true,  speed); setRightMotors(false, speed); }
+
+//  Serial Command Parser 
+
+void handleSerialCommand() {
+  String raw = Serial.readStringUntil('\n');
+  raw.trim();
+  if (raw.length() == 0) return;
+
+  Serial.print("CMD:received:");
+  Serial.println(raw);
+
+#if DEBUG_SERIAL
+  Serial.print("{\"debug\":\"rx\",\"raw\":\"");
+  Serial.print(raw);
+  Serial.println("\"}");
+#endif
+
+  JsonDocument doc;
+  DeserializationError err = deserializeJson(doc, raw);
+  if (err) {
+#if DEBUG_SERIAL
+    Serial.println("{\"debug\":\"bad_json\"}");
+#else
+    Serial.println("{\"error\":\"bad_json\"}");
+#endif
+    return;
+  }
+
+  const char* cmd = doc["cmd"];
+  if (!cmd) {
+    Serial.println("{\"error\":\"no_cmd\"}");
+    return;
+  }
+
+  if (strcmp(cmd, "estop") == 0) {
+    eStop = true;
+    stopMotors();
+    Serial.println("{\"ack\":\"estop\",\"locked\":true}");
+    return;
+  }
+
+  if (strcmp(cmd, "reset") == 0) {
+    eStop = false;
+    Serial.println("{\"ack\":\"reset\",\"locked\":false}");
+    return;
+  }
+
+  if (eStop) {
+    Serial.println("{\"error\":\"estop_active\"}");
+    return;
+  }
+
+  if (strcmp(cmd, "stop") == 0) {
+    stopMotors();
+    strcpy(currentDir, "stop");
+    currentSpeed = 0;
+    Serial.println("{\"ack\":\"stop\"}");
+    return;
+  }
+
+  if (strcmp(cmd, "move") == 0) {
+    const char* dir = doc["dir"] | "forward";
+    int speed = doc["speed"] | 150;
+    speed = constrain(speed, 0, 255);
+
+    currentSpeed = speed;
+    strncpy(currentDir, dir, sizeof(currentDir) - 1);
+
+#if DEBUG_SERIAL
+    Serial.print("{\"debug\":\"move_exec\",\"dir\":\"");
+    Serial.print(dir);
+    Serial.print("\",\"speed\":");
+    Serial.print(speed);
+    Serial.println("}");
+#endif
+
+    if      (strcmp(dir, "forward")  == 0) moveForward(speed);
+    else if (strcmp(dir, "backward") == 0) moveBackward(speed);
+    else if (strcmp(dir, "left")     == 0) turnLeft(speed);
+    else if (strcmp(dir, "right")    == 0) turnRight(speed);
+    else {
+      Serial.println("{\"error\":\"unknown_dir\"}");
+      return;
+    }
+#if !HAS_MOTORS
+    Serial.print("{\"ack\":\"move\",\"note\":\"motors not wired — no physical movement\",\"dir\":\"");
+#else
+    Serial.print("{\"ack\":\"move\",\"dir\":\"");
+#endif
+    Serial.print(dir);
+    Serial.print("\",\"speed\":");
+    Serial.print(speed);
+    Serial.println("}");
+    return;
+  }
+
+  if (strcmp(cmd, "sample") == 0) {
+    int frontDist = -1;
+#if HAS_US_FRONT
+    frontDist = readUltrasonic(US_TRIG, US_FRONT_ECHO);
+#endif
+    broadcastSensorData(frontDist);
+    return;
+  }
+
+  Serial.println("{\"error\":\"unknown_cmd\"}");
+}
+
+//  Sensor Reading 
+
+int readMoisture(int pin) {
+  // Capacitive sensor: high raw = dry, low raw = wet
+  // Calibration values — tune these on your specific sensor + soil type
+  const int DRY_VAL = 780;   // raw ADC when sensor is in dry air
+  const int WET_VAL = 330;   // raw ADC when sensor is fully submerged
+  int raw = analogRead(pin);
+  int pct = map(raw, DRY_VAL, WET_VAL, 0, 100);
+  return constrain(pct, 0, 100);
+}
+
+long readUltrasonic(int trigPin, int echoPin) {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  long duration = pulseIn(echoPin, HIGH, US_TIMEOUT);
+  if (duration == 0) return -1;   // timeout = out of range
+  return duration / 58;
+}
+
+void broadcastSensorData(int frontDist) {
+  JsonDocument out;
+
+  // Soil moisture
+#if HAS_MOISTURE
+  out["moisture"] = readMoisture(MOISTURE_PIN);
+#else
+  out["moisture"] = (const char*)0;
+#endif
+
+  // BME280 — self-detected
+  if (bmeAvailable) {
+    out["air_temp"] = serialized(String(bme.readTemperature(), 1));
+    out["humidity"] = serialized(String(bme.readHumidity(),    1));
+    out["pressure"] = serialized(String(bme.readPressure() / 100.0F, 1));
+  } else {
+    out["air_temp"] = (const char*)0;
+    out["humidity"] = (const char*)0;
+    out["pressure"] = (const char*)0;
+  }
+
+  // DHT22
+#if HAS_DHT22
+  float dTemp = dht.readTemperature();
+  float dHum  = dht.readHumidity();
+  if (isnan(dTemp)) out["dht_temp"] = (const char*)0;
+  else              out["dht_temp"] = serialized(String(dTemp, 1));
+
+  if (isnan(dHum)) out["dht_humidity"] = (const char*)0;
+  else             out["dht_humidity"] = serialized(String(dHum, 1));
+#else
+  out["dht_temp"]     = (const char*)0;
+  out["dht_humidity"] = (const char*)0;
+#endif
+
+  // Ultrasonic
+#if HAS_US_FRONT
+  out["us_front"] = frontDist;
+#else
+  out["us_front"] = (const char*)0;
+#endif
+
+#if HAS_US_REAR
+  out["us_rear"] = readUltrasonic(US_TRIG, US_REAR_ECHO);
+#else
+  out["us_rear"] = (const char*)0;
+#endif
+
+  out["estop"] = eStop;
+  out["dir"]   = currentDir;
+  out["speed"] = currentSpeed;
+
+  serializeJson(out, Serial);
+  Serial.println();
+}
+
+#endif

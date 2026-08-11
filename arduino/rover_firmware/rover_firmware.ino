@@ -16,7 +16,7 @@
  *                     rear-right:  ENB=D9(PWM) IN3=D10 IN4=D11
  *  Ultrasonic   TRIG=A0 (shared front+rear)  FRONT_ECHO=A1  REAR_ECHO=A2
  *  DHT22        DATA=A3
- *  Soil moisture (1 probe) A6
+ *  Soil moisture probes  SIG1→A6  SIG2→A7  (VCC+GND shared)
  *  BME280       I2C — SDA=A4  SCL=A5 (fixed)
  *  D0/D1 reserved for Pi serial — every other digital pin D2-D13
  *  is used by motors; nothing free there. Add-ons later must
@@ -65,17 +65,23 @@ void loop() {
 #include <Wire.h>
 #include <ArduinoJson.h>
 
-// Optional sensor libs — only pulled in when flags are true so a missing
-// library or a stuck I2C bus cannot brick motor control.
+// ── Sensor enable flags ───────────────────────────────────────
+// Flip to true ONLY after that part is wired, then re-upload.
+// Order to bring up: motors → moisture → US front → DHT or BME.
 #define HAS_MOTORS       true
-#define HAS_US_FRONT     false
-#define HAS_US_REAR      false
-#define HAS_DHT22        false
-#define HAS_MOISTURE     false
-#define HAS_BME280       false   // set true only after BME280 is wired + library installed
+#define HAS_US_FRONT     true   // HC-SR04: TRIG=A0  ECHO=A1
+#define HAS_US_REAR      true   // HC-SR04: TRIG=A0  ECHO=A2
+#define HAS_DHT22        true    // DHT22 data pin A3  (needs DHT library)
+#define HAS_MOISTURE     true    // two capacitive probes: A6 + A7
+#define HAS_BME280       false    // I2C A4/A5 (needs Adafruit BME280)
 
-#define LEFT_MOTOR_INVERT   false
-#define RIGHT_MOTOR_INVERT  false
+// Capacitive soil moisture calibration (raw ADC 0–1023 on Nano 5V)
+// Measure in air (dry) and in water (wet), then set these:
+#define MOISTURE_DRY_ADC  780
+#define MOISTURE_WET_ADC  330
+
+#define LEFT_MOTOR_INVERT   true
+#define RIGHT_MOTOR_INVERT  true
 
 // Motors (2x L298N)
 #define FL_ENA      3
@@ -98,7 +104,8 @@ void loop() {
 
 #define DHT_PIN     A3
 #define DHT_TYPE    DHT22
-#define MOISTURE_PIN    A6
+#define MOISTURE_PIN_1  A6
+#define MOISTURE_PIN_2  A7
 
 #define SAMPLE_INTERVAL   2000
 #define US_TIMEOUT        30000
@@ -379,11 +386,20 @@ void handleLine(char* line) {
 
 // ── Sensors ──────────────────────────────────────────────────
 
-int readMoisture(int pin) {
-  const int DRY_VAL = 780;
-  const int WET_VAL = 330;
-  int raw = analogRead(pin);
-  int pct = map(raw, DRY_VAL, WET_VAL, 0, 100);
+int readMoistureRaw(int pin) {
+  // Average a few samples — capacitive probes are noisy
+  long sum = 0;
+  for (int i = 0; i < 5; i++) {
+    sum += analogRead(pin);
+    delay(2);
+  }
+  return (int)(sum / 5);
+}
+
+int readMoisturePct(int pin) {
+  // Capacitive: high raw ≈ dry, low raw ≈ wet
+  int raw = readMoistureRaw(pin);
+  int pct = map(raw, MOISTURE_DRY_ADC, MOISTURE_WET_ADC, 0, 100);
   return constrain(pct, 0, 100);
 }
 
@@ -395,52 +411,78 @@ long readUltrasonic(int trigPin, int echoPin) {
   digitalWrite(trigPin, LOW);
 
   long duration = pulseIn(echoPin, HIGH, US_TIMEOUT);
-  if (duration == 0) return -1;
-  return duration / 58;
+  if (duration == 0) return -1;   // timeout / not connected
+  long cm = duration / 58;
+  if (cm < 2 || cm > 400) return -1;
+  return cm;
 }
 
 void broadcastSensorData(int frontDist) {
-  // ArduinoJson 7: JsonDocument (StaticJsonDocument is deprecated)
+  // ArduinoJson 7
   JsonDocument out;
 
+  // Moisture — Pi logger accepts a single int or [m1, m2]
 #if HAS_MOISTURE
-  out["moisture"] = readMoisture(MOISTURE_PIN);
+  {
+    int pct1 = readMoisturePct(MOISTURE_PIN_1);
+    int pct2 = readMoisturePct(MOISTURE_PIN_2);
+    int raw1 = readMoistureRaw(MOISTURE_PIN_1);
+    int raw2 = readMoistureRaw(MOISTURE_PIN_2);
+    // Primary field: array [probe1, probe2] for Pi logger
+    JsonArray marr = out["moisture"].to<JsonArray>();
+    marr.add(pct1);
+    marr.add(pct2);
+    JsonArray rarr = out["moisture_raw"].to<JsonArray>();
+    rarr.add(raw1);
+    rarr.add(raw2);
+    out["moisture_arr"] = marr;  // alias
+  }
 #else
   out["moisture"] = nullptr;
+  out["moisture_raw"] = nullptr;
 #endif
 
+  // Prefer BME280 for air; fall back to DHT22 values as air_temp/humidity
+  bool airSet = false;
 #if HAS_BME280
   if (bmeAvailable) {
     out["air_temp"] = serialized(String(bme.readTemperature(), 1));
     out["humidity"] = serialized(String(bme.readHumidity(), 1));
     out["pressure"] = serialized(String(bme.readPressure() / 100.0F, 1));
-  } else {
-    out["air_temp"] = nullptr;
-    out["humidity"] = nullptr;
-    out["pressure"] = nullptr;
+    airSet = true;
   }
-#else
-  out["air_temp"] = nullptr;
-  out["humidity"] = nullptr;
-  out["pressure"] = nullptr;
 #endif
-
 #if HAS_DHT22
   {
     float dTemp = dht.readTemperature();
     float dHum  = dht.readHumidity();
-    if (isnan(dTemp)) out["dht_temp"] = nullptr;
-    else              out["dht_temp"] = serialized(String(dTemp, 1));
-    if (isnan(dHum))  out["dht_humidity"] = nullptr;
-    else              out["dht_humidity"] = serialized(String(dHum, 1));
+    if (!isnan(dTemp)) {
+      out["dht_temp"] = serialized(String(dTemp, 1));
+      if (!airSet) out["air_temp"] = serialized(String(dTemp, 1));
+    } else {
+      out["dht_temp"] = nullptr;
+    }
+    if (!isnan(dHum)) {
+      out["dht_humidity"] = serialized(String(dHum, 1));
+      if (!airSet) out["humidity"] = serialized(String(dHum, 1));
+    } else {
+      out["dht_humidity"] = nullptr;
+    }
+    if (!airSet) out["pressure"] = nullptr;
+    airSet = airSet || (!isnan(dTemp) && !isnan(dHum));
   }
 #else
   out["dht_temp"]     = nullptr;
   out["dht_humidity"] = nullptr;
 #endif
+  if (!airSet) {
+    out["air_temp"] = nullptr;
+    out["humidity"] = nullptr;
+    out["pressure"] = nullptr;
+  }
 
 #if HAS_US_FRONT
-  out["us_front"] = frontDist;
+  out["us_front"] = frontDist;   // cm, or -1 if no echo
 #else
   out["us_front"] = nullptr;
 #endif

@@ -2,7 +2,7 @@
 config.py
 ──────────
 Single source of truth for all rover settings.
-Change values here — nothing else needs editing.
+Change values here .
 """
 
 import os
@@ -68,7 +68,7 @@ OBSTACLE_DIST_CM    = 20     # stop if ultrasonic reads below this
 GPS_PORT        = "/dev/serial0"   # Pi UART — always the GPIO UART on Pi4, unlike /dev/ttyAMA0 which Bluetooth can claim
 GPS_BAUD        = 9600
 GPS_TIMEOUT     = 1
-WAYPOINT_RADIUS = 1.5              # metres — how close = "arrived"
+WAYPOINT_RADIUS = 4.0              # metres — NEO-6M realistic arrival gate
 
 # ── IMU (MPU-6050) ─────────────────────────────────────────────
 IMU_I2C_ADDRESS = 0x68            # AD0 low = 0x68, AD0 high = 0x69
@@ -91,19 +91,17 @@ STRESS_THRESHOLD = 0.25    # if yellow% > 25% of leaf area → flag stress
 
 # ── Mission ────────────────────────────────────────────────────
 PATROL_INTERVAL_MIN = 120   # minutes between full patrols
-MAX_MISSION_TIME    = 240   # minutes — hard cutoff for battery safety
+MAX_MISSION_TIME    = 240   # minutes — hard mission time limit
 SAMPLE_AT_WAYPOINT  = True  # force sensor sample + photo at each waypoint
 
-# ── Battery / mission safety ───────────────────────────────────
-# Prefer a live reading from Arduino JSON ("battery_pct" or "voltage").
-# If neither is present, fall back to a time-based estimate so the UI
-# always shows a percentage and low-battery abort still works.
-BATTERY_LOW_PCT          = 15    # abort mission at or below this %
-BATTERY_CRITICAL_PCT     = 8     # force estop / refuse status
-BATTERY_FULL_VOLTAGE     = 12.6  # pack voltage treated as 100% (e.g. 3S Li-ion)
-BATTERY_EMPTY_VOLTAGE    = 10.5  # pack voltage treated as 0%
-BATTERY_ESTIMATE_HOURS   = 4.0   # assumed runtime for estimate mode
-BATTERY_POLL_INTERVAL_S  = 5.0   # how often nav re-checks battery
+# Battery — display only (never aborts a mission)
+BATTERY_FULL_VOLTAGE     = 12.6
+BATTERY_EMPTY_VOLTAGE    = 10.5
+BATTERY_ESTIMATE_HOURS   = 4.0
+BATTERY_POLL_INTERVAL_S  = 5.0
+
+# Field GPS tolerance (NEO-6M is typically ±2–5 m)
+WAYPOINT_RADIUS_FIELD    = 4.0   # used note: WAYPOINT_RADIUS below is the live value
 
 # ── Dashboard ──────────────────────────────────────────────────
 DASHBOARD_HOST  = "0.0.0.0"

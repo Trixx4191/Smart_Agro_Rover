@@ -205,9 +205,32 @@ class DataLogger:
         lat = gps_coords[0] if gps_coords else None
         lon = gps_coords[1] if gps_coords else None
 
-        moisture  = sensor_data.get("moisture")  or [None, None]
-        soil_temp = sensor_data.get("soil_temp") or [None, None]
-        enc       = sensor_data.get("enc")        or [0, 0, 0, 0]
+        # Arduino may send moisture as int, or array [m1, m2], or null
+        moisture_raw = sensor_data.get("moisture")
+        if isinstance(moisture_raw, (list, tuple)):
+            moisture = list(moisture_raw) + [None, None]
+            moisture = moisture[:2]
+        elif isinstance(moisture_raw, (int, float)):
+            moisture = [int(moisture_raw), None]
+        else:
+            arr = sensor_data.get("moisture_arr")
+            if isinstance(arr, (list, tuple)) and len(arr) >= 1:
+                moisture = [arr[0], arr[1] if len(arr) > 1 else None]
+            else:
+                moisture = [None, None]
+
+        soil_temp_raw = sensor_data.get("soil_temp")
+        if isinstance(soil_temp_raw, (list, tuple)):
+            soil_temp = list(soil_temp_raw) + [None, None]
+            soil_temp = soil_temp[:2]
+        elif isinstance(soil_temp_raw, (int, float)):
+            soil_temp = [float(soil_temp_raw), None]
+        else:
+            soil_temp = [None, None]
+
+        enc = sensor_data.get("enc") or [0, 0, 0, 0]
+        if not isinstance(enc, (list, tuple)):
+            enc = [0, 0, 0, 0]
 
         row = {
             "timestamp":    ts,
@@ -297,6 +320,71 @@ class DataLogger:
         )
         cols = [d[0] for d in cur.description]
         return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+    def get_all_readings(self) -> list:
+        """All readings in the SQLite DB (oldest first)."""
+        cur = self._db_conn.execute(
+            "SELECT * FROM readings ORDER BY timestamp ASC"
+        )
+        cols = [d[0] for d in cur.description]
+        return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+    def export_readings_csv(self) -> str:
+        """Build a CSV string of every reading in the database."""
+        import io
+        rows = self.get_all_readings()
+        buf = io.StringIO()
+        fields = [
+            "id", "timestamp", "datetime",
+            "moisture_1", "moisture_2", "soil_temp_1", "soil_temp_2",
+            "air_temp", "humidity", "pressure",
+            "us_front", "us_rear",
+            "enc_lf", "enc_lr", "enc_rf", "enc_rr",
+            "latitude", "longitude",
+            "image_path", "stress_flag", "stress_score",
+        ]
+        w = csv.DictWriter(buf, fieldnames=fields, extrasaction="ignore")
+        w.writeheader()
+        for r in rows:
+            w.writerow(r)
+        return buf.getvalue()
+
+    def export_mission_events_csv(self) -> str:
+        """Build a CSV string of mission start/stop events."""
+        import io
+        rows = self.get_mission_events(n=10000)
+        # get_mission_events may be newest-first; export oldest-first if possible
+        rows = list(reversed(rows)) if rows else []
+        buf = io.StringIO()
+        fields = [
+            "id", "timestamp", "datetime", "event", "reason", "detail",
+            "mode", "status", "battery_pct", "current_wp", "total_wp",
+            "latitude", "longitude",
+        ]
+        w = csv.DictWriter(buf, fieldnames=fields, extrasaction="ignore")
+        w.writeheader()
+        for r in rows:
+            w.writerow(r)
+        return buf.getvalue()
+
+    def list_session_csvs(self) -> list:
+        """Session CSV files on disk (newest first)."""
+        files = []
+        try:
+            for name in os.listdir(self.log_dir):
+                if name.startswith("session_") and name.endswith(".csv"):
+                    path = os.path.join(self.log_dir, name)
+                    st = os.stat(path)
+                    files.append({
+                        "name": name,
+                        "path": path,
+                        "size": st.st_size,
+                        "mtime": st.st_mtime,
+                    })
+        except OSError:
+            pass
+        files.sort(key=lambda f: f["mtime"], reverse=True)
+        return files
 
     def summary(self) -> Dict[str, Any]:
         """Return quick stats for the dashboard."""

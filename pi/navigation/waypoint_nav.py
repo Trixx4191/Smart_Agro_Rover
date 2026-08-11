@@ -54,18 +54,16 @@ class WaypointNavigator:
         self._on_arrival: Optional[Callable] = None
 
         # Mission safety / stop accounting
-        self._stop_reason: str = ""       # completed|abort|battery|obstacle|timeout|gps_loss
+        self._stop_reason: str = ""       # completed|abort|obstacle|timeout|gps_loss
         self._stop_detail: str = ""
         self._mission_started_at: Optional[float] = None
-        self._last_battery_check: float = 0.0
         self._obstacle_strikes: int = 0
         self._stop_logged: bool = False
-        self.battery = None               # optional BatteryMonitor, set by mission/server
 
         from pi.config import (
             WAYPOINT_RADIUS, SPEED_CRUISE, SPEED_TURN,
             SPEED_SLOW, OBSTACLE_DIST_CM, SAMPLE_AT_WAYPOINT,
-            MAX_MISSION_TIME, BATTERY_POLL_INTERVAL_S,
+            MAX_MISSION_TIME,
         )
         self.waypoint_radius  = WAYPOINT_RADIUS
         self.speed_cruise     = SPEED_CRUISE
@@ -74,7 +72,6 @@ class WaypointNavigator:
         self.obstacle_dist    = OBSTACLE_DIST_CM
         self.sample_at_wp     = SAMPLE_AT_WAYPOINT
         self.max_mission_sec  = MAX_MISSION_TIME * 60
-        self.battery_poll_s   = BATTERY_POLL_INTERVAL_S
         self.max_obstacle_strikes = 5
 
     # ── Setup ─────────────────────────────────────────────────
@@ -161,24 +158,14 @@ class WaypointNavigator:
                 self._stop_reason = status
                 self._stop_detail = self._stop_detail or status
 
-        bat = self._battery_snapshot()
         self._notify_dashboard(
             status=status,
             stop_reason=self._stop_reason,
             stop_detail=self._stop_detail,
-            **bat,
         )
         if not self._stop_logged:
             self._stop_logged = True
             self._log_stop_event(status)
-
-    def _battery_snapshot(self) -> Dict[str, Any]:
-        if self.battery is None:
-            return {}
-        try:
-            return self.battery.snapshot()
-        except Exception:
-            return {}
 
     def _log_stop_event(self, status: str):
         if self.logger is None:
@@ -189,7 +176,6 @@ class WaypointNavigator:
                 gps = self.gps.position()
         except Exception:
             pass
-        bat = self._battery_snapshot()
         try:
             self.logger.log_mission_event(
                 event="mission_stop",
@@ -197,7 +183,7 @@ class WaypointNavigator:
                 detail=self._stop_detail,
                 mode=self._mode,
                 status=status,
-                battery_pct=bat.get("battery_pct"),
+                battery_pct=None,
                 current_wp=self._current_wp,
                 total_wp=len(self._waypoints),
                 gps_coords=gps if gps[0] is not None else None,
@@ -206,33 +192,15 @@ class WaypointNavigator:
             log.error(f"Navigator: failed to log mission stop — {e}")
 
     def _safety_should_stop(self) -> bool:
-        """Battery + max mission time checks. Returns True if mission must end."""
-        now = time.time()
-
-        # Time limit
+        """Max mission time only. No battery cutoff."""
         if self._mission_started_at and self.max_mission_sec > 0:
-            elapsed = now - self._mission_started_at
+            elapsed = time.time() - self._mission_started_at
             if elapsed >= self.max_mission_sec:
                 self._stop_reason = "timeout"
                 self._stop_detail = (
                     f"Max mission time reached ({int(elapsed/60)} min)"
                 )
                 return True
-
-        # Battery
-        if self.battery is not None and (now - self._last_battery_check) >= self.battery_poll_s:
-            self._last_battery_check = now
-            try:
-                snap = self.battery.snapshot()
-                self._notify_dashboard(**snap)
-                if self.battery.is_critical() or self.battery.is_low():
-                    pct = snap.get("battery_pct", 0)
-                    self._stop_reason = "battery"
-                    self._stop_detail = f"Battery low ({pct}%) — mission halted"
-                    return True
-            except Exception as e:
-                log.error(f"Navigator: battery check failed — {e}")
-
         return False
 
     # ── Main patrol loop ──────────────────────────────────────
@@ -254,18 +222,10 @@ class WaypointNavigator:
         self._stop_logged = False
         self._obstacle_strikes = 0
         self._mission_started_at = time.time()
-        self._last_battery_check = 0.0
-        if self.battery is not None:
-            try:
-                self.battery.start_mission()
-            except Exception:
-                pass
 
-        bat = self._battery_snapshot()
         self._notify_dashboard(
             status="running", mode=self._mode,
             stop_reason="", stop_detail="",
-            **bat,
         )
         if self.logger is not None:
             try:
@@ -275,7 +235,7 @@ class WaypointNavigator:
                     detail=f"mode={self._mode} waypoints={len(self._waypoints)}",
                     mode=self._mode,
                     status="running",
-                    battery_pct=bat.get("battery_pct"),
+                    battery_pct=None,
                     current_wp=0,
                     total_wp=len(self._waypoints),
                 )
@@ -311,7 +271,7 @@ class WaypointNavigator:
             except Exception:
                 pass
 
-            if self._stop_reason in ("battery", "timeout", "obstacle", "gps_loss"):
+            if self._stop_reason in ("timeout", "obstacle", "gps_loss"):
                 status = "aborted"
             elif self._stop_reason == "abort":
                 status = "aborted"

@@ -691,5 +691,10 @@ async function refresh() {
 refresh();
 setInterval(refresh, 5000);
 </script>
+
+<div id="exportBar" style="position:fixed;bottom:16px;right:16px;z-index:999;display:flex;gap:8px;flex-wrap:wrap">
+  <a href="/api/export/readings.csv" download style="background:#3dd68c;color:#062216;text-decoration:none;padding:10px 14px;border-radius:10px;font-weight:700;font-size:0.8rem;box-shadow:0 4px 16px rgba(0,0,0,0.3)">⬇ Readings CSV</a>
+  <a href="/api/export/mission_events.csv" download style="background:#16201b;color:#eef5f0;border:1px solid rgba(255,255,255,0.12);text-decoration:none;padding:10px 14px;border-radius:10px;font-weight:600;font-size:0.8rem;box-shadow:0 4px 16px rgba(0,0,0,0.3)">⬇ Missions CSV</a>
+</div>
 </body>
 </html>

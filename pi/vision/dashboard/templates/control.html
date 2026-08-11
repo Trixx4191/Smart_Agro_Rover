@@ -4,481 +4,289 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>AgroRover — Drive</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:        #0b0f0d;
-    --bg-elev:   #121a16;
-    --bg-card:   #16201b;
-    --line:      rgba(255,255,255,0.08);
-    --line-strong: rgba(255,255,255,0.14);
-    --text:      #eef5f0;
-    --muted:     #8a9a90;
-    --faint:     #5c6b62;
-    --green:     #3dd68c;
-    --green-dim: rgba(61,214,140,0.15);
-    --green-glow: rgba(61,214,140,0.35);
-    --amber:     #f0b429;
-    --red:       #f07167;
-    --red-dim:   rgba(240,113,103,0.15);
-    --radius:    16px;
-    --radius-sm: 12px;
-    --safe-b:    env(safe-area-inset-bottom, 0px);
+    --bg: #0b0f0d; --card: #16201b; --elev: #121a16;
+    --line: rgba(255,255,255,0.1); --text: #eef5f0; --muted: #8a9a90;
+    --green: #3dd68c; --green-dim: rgba(61,214,140,0.15);
+    --red: #f07167; --blue: #6ec8ff;
   }
-
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-  html, body { height: 100%; }
   body {
     font-family: 'DM Sans', system-ui, sans-serif;
-    background:
-      radial-gradient(1200px 600px at 50% -10%, rgba(61,214,140,0.08), transparent 55%),
-      radial-gradient(800px 400px at 100% 100%, rgba(61,214,140,0.04), transparent 40%),
-      var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1.25rem 1.25rem calc(2rem + var(--safe-b));
-    user-select: none;
+    background: radial-gradient(900px 500px at 50% -10%, rgba(61,214,140,0.08), transparent), var(--bg);
+    color: var(--text); min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 1.1rem 1.1rem 2rem; user-select: none;
   }
   .mono { font-family: 'JetBrains Mono', monospace; }
-
-  /* Top nav */
-  .top {
-    width: 100%;
-    max-width: 420px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.25rem;
-  }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .brand-mark {
-    width: 28px; height: 28px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, var(--green), #1a9f5c);
-    display: grid; place-items: center;
-    box-shadow: 0 0 20px var(--green-glow);
-  }
-  .brand-mark svg { width: 16px; height: 16px; }
-  .brand h1 {
-    font-size: 0.95rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-  .brand span {
-    display: block;
-    font-size: 0.65rem;
-    color: var(--muted);
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    margin-top: 1px;
-  }
-  .nav-links { display: flex; gap: 6px; }
-  .nav-links a {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    padding: 8px 12px;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    transition: 0.15s ease;
-  }
-  .nav-links a:hover {
-    color: var(--text);
-    border-color: var(--line);
-    background: var(--bg-elev);
-  }
-
-  /* Status pill */
+  .top { width: 100%; max-width: 440px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .brand h1 { font-size: 0.95rem; font-weight: 700; }
+  .brand span { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .nav a { color: var(--muted); text-decoration: none; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; margin-left: 10px; }
   #status {
-    width: 100%;
-    max-width: 420px;
-    background: var(--bg-card);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
+    width: 100%; max-width: 440px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 0.75rem;
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
   }
-  #status .left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--muted);
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; margin-right: 8px; }
+  #status.ok .dot { background: var(--green); box-shadow: 0 0 0 3px var(--green-dim); }
+  #status.bad .dot { background: var(--red); }
+  #lastCmd { font-size: 0.72rem; color: var(--green); background: var(--green-dim); padding: 5px 9px; border-radius: 8px; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card {
+    width: 100%; max-width: 440px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 0.75rem;
   }
-  #status .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--faint);
-    box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
+  .card h3 { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .toggle-label { font-size: 0.88rem; font-weight: 600; }
+  .toggle-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .switch {
+    position: relative; width: 52px; height: 30px; flex-shrink: 0;
+    background: var(--elev); border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
   }
-  #status.ok .dot {
-    background: var(--green);
-    box-shadow: 0 0 0 3px var(--green-dim), 0 0 12px var(--green-glow);
-  }
-  #status.bad .dot {
-    background: var(--red);
-    box-shadow: 0 0 0 3px var(--red-dim);
-  }
-  #lastCmd {
-    font-size: 0.72rem;
-    color: var(--green);
-    background: var(--green-dim);
-    padding: 6px 10px;
-    border-radius: 8px;
-    max-width: 55%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* Mode toggle */
-  .mode-toggle {
-    width: 100%;
-    max-width: 420px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px;
-    padding: 4px;
-    background: var(--bg-elev);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    margin-bottom: 1.5rem;
-  }
-  .mode-toggle button {
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    padding: 12px 8px;
-    font-family: inherit;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: 0.15s ease;
-  }
-  .mode-toggle button.active {
-    background: var(--bg-card);
-    color: var(--text);
-    box-shadow: 0 1px 0 var(--line-strong), 0 4px 16px rgba(0,0,0,0.25);
-  }
-  .mode-toggle button.active#btnDrive {
-    color: var(--green);
-  }
-
-  /* D-pad */
-  .pad-wrap {
-    width: 100%;
-    max-width: 420px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.25rem;
-  }
+  .switch.on { background: var(--green-dim); border-color: var(--green); }
+  .switch i { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--muted); transition: 0.15s; }
+  .switch.on i { left: 25px; background: var(--green); }
+  .readings { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .readings div { background: var(--elev); border-radius: 10px; padding: 8px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; }
+  .readings span { display: block; color: var(--muted); font-size: 0.62rem; margin-bottom: 2px; text-transform: uppercase; }
+  .readings b { color: var(--text); font-weight: 600; }
   .pad {
-    display: grid;
-    grid-template-columns: 96px 96px 96px;
-    grid-template-rows: 96px 96px 96px;
-    gap: 12px;
+    display: grid; grid-template-columns: 96px 96px 96px; grid-template-rows: 96px 96px 96px;
+    gap: 12px; margin: 0.5rem auto 1rem;
   }
   .pad button {
-    border: 1px solid var(--line-strong);
-    background: linear-gradient(180deg, #1c2822 0%, #141c18 100%);
-    color: var(--text);
-    font-size: 26px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    touch-action: manipulation;
-    cursor: pointer;
-    transition: transform 0.08s ease, background 0.08s ease, border-color 0.08s ease, box-shadow 0.08s ease;
-    box-shadow: 0 6px 0 #0a0e0c, 0 10px 24px rgba(0,0,0,0.35);
+    border: 1px solid var(--line); background: linear-gradient(180deg, #1c2822, #141c18);
+    color: var(--text); font-size: 24px; border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation; cursor: pointer;
+    box-shadow: 0 5px 0 #0a0e0c, 0 8px 20px rgba(0,0,0,0.3);
     font-family: 'JetBrains Mono', monospace;
   }
   .pad button:active, .pad button.held {
-    transform: translateY(4px);
-    box-shadow: 0 2px 0 #0a0e0c, 0 4px 12px rgba(0,0,0,0.3);
-    background: linear-gradient(180deg, var(--green) 0%, #2bb873 100%);
-    border-color: transparent;
-    color: #062216;
+    transform: translateY(3px); box-shadow: 0 2px 0 #0a0e0c;
+    background: linear-gradient(180deg, var(--green), #2bb873); color: #062216; border-color: transparent;
   }
   .pad .empty { background: transparent; border: none; box-shadow: none; pointer-events: none; }
   .pad .stop {
-    background: linear-gradient(180deg, #2a1816 0%, #1a100f 100%);
-    border-color: rgba(240,113,103,0.35);
-    color: var(--red);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    box-shadow: 0 6px 0 #0d0808, 0 10px 24px rgba(0,0,0,0.35);
+    background: linear-gradient(180deg, #2a1816, #1a100f); border-color: rgba(240,113,103,0.35);
+    color: var(--red); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
   }
-  .pad .stop:active {
-    background: linear-gradient(180deg, var(--red) 0%, #d4554c 100%);
-    color: #1a0808;
-    border-color: transparent;
-    box-shadow: 0 2px 0 #0d0808, 0 4px 12px rgba(0,0,0,0.3);
+  .pad .stop:active { background: var(--red); color: #1a0808; }
+  .actions { width: 100%; max-width: 440px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .actions button {
+    border: 1px solid var(--line); background: var(--card); color: var(--text);
+    padding: 14px 12px; border-radius: 12px; font-weight: 600; font-size: 0.8rem;
+    cursor: pointer; font-family: inherit;
   }
-
-  /* Actions */
-  .capture-row, .speed-row {
-    width: 100%;
-    max-width: 420px;
+  .actions button.photo { border-color: rgba(110,200,255,0.35); color: var(--blue); }
+  .actions button:active { transform: scale(0.98); }
+  .speed {
+    width: 100%; max-width: 440px; margin-top: 1rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px;
   }
-  .capture-row { margin-top: 0.25rem; }
-  .capture-row button {
-    width: 100%;
-    border: 1px solid var(--line-strong);
-    background: var(--bg-card);
-    color: var(--text);
-    padding: 14px 16px;
-    font-family: inherit;
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: 0.15s ease;
+  .speed label {
+    display: flex; justify-content: space-between; font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 10px;
   }
-  .capture-row button:active {
-    background: var(--green-dim);
-    border-color: var(--green);
-    color: var(--green);
-  }
-
-  .speed-row {
-    margin-top: 1.5rem;
-    background: var(--bg-card);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 16px 18px 20px;
-  }
-  .speed-row label {
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--muted);
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .speed-row label span {
-    color: var(--green);
-    font-family: 'JetBrains Mono', monospace;
-  }
-  input[type=range] {
-    width: 100%;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 6px;
-    border-radius: 999px;
-    background: var(--bg);
-    outline: none;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    background: var(--green);
-    border: 3px solid #0b0f0d;
-    box-shadow: 0 0 0 2px var(--green), 0 0 16px var(--green-glow);
-    cursor: pointer;
-  }
-  input[type=range]::-moz-range-thumb {
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    background: var(--green);
-    border: 3px solid #0b0f0d;
-    box-shadow: 0 0 0 2px var(--green);
-    cursor: pointer;
-  }
-
-  .hint {
-    margin-top: 1.75rem;
-    font-size: 0.78rem;
-    color: var(--faint);
-    text-align: center;
-    max-width: 340px;
-    line-height: 1.55;
-  }
-
-  /* Disabled pad look when readings mode */
-  .pad.is-locked {
-    opacity: 0.4;
-    filter: grayscale(0.4);
-    pointer-events: none;
-  }
+  .speed label span { color: var(--green); font-family: 'JetBrains Mono', monospace; }
+  input[type=range] { width: 100%; accent-color: var(--green); }
+  .hint { margin-top: 1.25rem; font-size: 0.75rem; color: var(--muted); text-align: center; max-width: 360px; line-height: 1.5; }
+  .live-panel { width: 100%; max-width: 440px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 0.75rem; }
+  .live-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .live-head h3 { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .live-tag { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--muted); text-transform: uppercase; }
+  .live-tag.on { color: var(--green); }
+  .live-body { position: relative; background: #0a0e0c; border-radius: 10px; overflow: hidden; aspect-ratio: 4/3; }
+  .live-body img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .live-body img.show { display: block; }
+  .live-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.78rem; text-align: center; padding: 1rem; }
+  .live-empty.hide { display: none; }
 </style>
 </head>
 <body>
-
 <div class="top">
-  <div class="brand">
-    <div class="brand-mark">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#062216" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 3c-2 4-6 6-6 10a6 6 0 0 0 12 0c0-4-4-6-6-10z"/>
-      </svg>
-    </div>
-    <div>
-      <h1>AgroRover</h1>
-      <span>Manual drive</span>
-    </div>
-  </div>
-  <div class="nav-links">
-    <a href="/mission">Mission</a>
-    <a href="/">Home</a><a href="/dashboard">Dashboard</a>
-  </div>
+  <div class="brand"><h1>AgroRover</h1><span>Manual field drive</span></div>
+  <div class="nav"><a href="/mission">Mission</a><a href="/dashboard">Dashboard</a><a href="/">Home</a></div>
 </div>
-
 <div id="status">
-  <div class="left">
-    <span class="dot"></span>
-    <span id="statusText">checking…</span>
-  </div>
+  <div><span class="dot"></span><span id="statusText">checking…</span></div>
   <span id="lastCmd" class="mono">idle</span>
 </div>
-
-<div class="mode-toggle">
-  <button id="btnReadings">Readings</button>
-  <button id="btnDrive" class="active">Drive</button>
-</div>
-
-<div class="pad-wrap">
-  <div class="pad" id="pad">
-    <div class="empty"></div>
-    <button id="btn-forward" data-dir="forward">▲</button>
-    <div class="empty"></div>
-
-    <button id="btn-left" data-dir="left">◀</button>
-    <button id="btn-stop" class="stop">STOP</button>
-    <button id="btn-right" data-dir="right">▶</button>
-
-    <div class="empty"></div>
-    <button id="btn-backward" data-dir="backward">▼</button>
-    <div class="empty"></div>
+<div class="live-panel">
+  <div class="live-head">
+    <h3>Live camera</h3>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="live-tag" id="liveTag">off</span>
+      <div class="switch" id="liveSwitch" role="switch" aria-checked="false"><i></i></div>
+    </div>
+  </div>
+  <div class="live-body">
+    <img id="liveFeedImg" alt="Live feed">
+    <div class="live-empty" id="liveEmpty">Toggle on to start stream</div>
   </div>
 </div>
 
-<div class="capture-row">
-  <button id="btnCapture">Capture reading</button>
+<div class="card">
+  <h3>Field readings</h3>
+  <div class="toggle-row">
+    <div>
+      <div class="toggle-label">Log sensors while driving</div>
+      <div class="toggle-sub">Samples every 3s as you move — sensors only, no photos</div>
+    </div>
+    <div class="switch" id="readSwitch" role="switch" aria-checked="false"><i></i></div>
+  </div>
+  <div class="readings">
+    <div><span>Air °C</span><b id="rTemp">—</b></div>
+    <div><span>Humidity</span><b id="rHum">—</b></div>
+    <div><span>Moisture 1</span><b id="rMoist1">—</b></div>
+    <div><span>Moisture 2</span><b id="rMoist2">—</b></div>
+    <div><span>GPS</span><b id="rGps">—</b></div>
+  </div>
 </div>
-
-<div class="speed-row">
-  <label>Cruise speed <span id="speedVal">150</span><span style="color:var(--faint)"> / 255</span></label>
+<div class="pad" id="pad">
+  <div class="empty"></div>
+  <button id="btn-forward" data-dir="forward">▲</button>
+  <div class="empty"></div>
+  <button id="btn-left" data-dir="left">◀</button>
+  <button id="btn-stop" class="stop">STOP</button>
+  <button id="btn-right" data-dir="right">▶</button>
+  <div class="empty"></div>
+  <button id="btn-backward" data-dir="backward">▼</button>
+  <div class="empty"></div>
+</div>
+<div class="actions">
+  <button class="photo" id="btnPhoto">Take photo</button>
+  <button id="btnSample">Sample now</button>
+</div>
+<div class="speed">
+  <label>Speed <span id="speedVal">150</span> / 255</label>
   <input type="range" id="speed" min="60" max="255" value="150">
 </div>
-
-<p class="hint" id="hintText">
-  Drive mode is active. Press and hold a direction to move the rover.
-</p>
-
+<div class="card" style="margin-top:0.75rem">
+  <h3>Download data</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:8px">
+    <a class="btn" href="/api/export/readings.csv" download style="text-decoration:none;color:inherit;border:1px solid var(--line);background:var(--elev);padding:10px 12px;border-radius:10px;font-size:0.78rem;font-weight:600">Readings CSV</a>
+    <a class="btn" href="/api/export/mission_events.csv" download style="text-decoration:none;color:inherit;border:1px solid var(--line);background:var(--elev);padding:10px 12px;border-radius:10px;font-size:0.78rem;font-weight:600">Missions CSV</a>
+  </div>
+</div>
+<p class="hint">Hold a direction to drive. Toggle logging on to record as you roll. Tap Take photo at any point of interest.</p>
 <script>
 const speedInput = document.getElementById('speed');
-const speedVal   = document.getElementById('speedVal');
-const statusEl   = document.getElementById('status');
+const speedVal = document.getElementById('speedVal');
+const statusEl = document.getElementById('status');
 const statusText = document.getElementById('statusText');
-const lastCmdEl  = document.getElementById('lastCmd');
-const padEl      = document.getElementById('pad');
-
-speedInput.addEventListener('input', () => speedVal.textContent = speedInput.value);
-
-let activeDir = null;
-let controlMode = 'drive';
-
-function setMode(mode) {
-  controlMode = mode;
-  document.getElementById('btnReadings').classList.toggle('active', mode === 'readings');
-  document.getElementById('btnDrive').classList.toggle('active', mode === 'drive');
-  padEl.classList.toggle('is-locked', mode !== 'drive');
-  document.getElementById('hintText').textContent = mode === 'drive'
-    ? 'Drive mode is active. Press and hold a direction to move the rover.'
-    : 'Readings mode — observation only. Switch to Drive to move the rover.';
+const lastCmdEl = document.getElementById('lastCmd');
+const readSwitch = document.getElementById('readSwitch');
+let activeDir = null, continuous = false, sampleTimer = null;
+const SAMPLE_MS = 3000;
+speedInput.oninput = () => speedVal.textContent = speedInput.value;
+function setContinuous(on) {
+  continuous = on;
+  readSwitch.classList.toggle('on', on);
+  readSwitch.setAttribute('aria-checked', on ? 'true' : 'false');
+  clearInterval(sampleTimer); sampleTimer = null;
+  if (on) { sampleOnce(); sampleTimer = setInterval(sampleOnce, SAMPLE_MS); lastCmdEl.textContent = 'logging on'; }
+  else lastCmdEl.textContent = 'logging off';
 }
-
-async function sendMove(dir) {
-  if (controlMode !== 'drive') return;
-  activeDir = dir;
-  lastCmdEl.textContent = dir + ' @ ' + speedInput.value;
+readSwitch.onclick = () => setContinuous(!continuous);
+async function sampleOnce() {
   try {
-    const r = await fetch('/api/control/move', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({dir: dir, speed: parseInt(speedInput.value)})
-    });
-    if (!r.ok) throw new Error('bad response');
+    const r = await fetch('/api/control/sample', { method: 'POST' });
+    const d = await r.json();
+    if (!r.ok) throw new Error();
+    const s = d.sensors || {};
+    const t = s.air_temp ?? s.dht_temp;
+    const h = s.humidity ?? s.dht_humidity;
+    let m = s.moisture;
+    let m1 = null, m2 = null;
+    if (Array.isArray(m)) { m1 = m[0]; m2 = m.length > 1 ? m[1] : null; }
+    else if (m != null) { m1 = m; }
+    document.getElementById('rTemp').textContent = t != null ? Number(t).toFixed(1) : '—';
+    document.getElementById('rHum').textContent = h != null ? Number(h).toFixed(1) + '%' : '—';
+    const e1 = document.getElementById('rMoist1');
+    const e2 = document.getElementById('rMoist2');
+    if (e1) e1.textContent = m1 != null ? m1 + '%' : '—';
+    if (e2) e2.textContent = m2 != null ? m2 + '%' : '—';
+    if (d.gps && d.gps[0] != null)
+      document.getElementById('rGps').textContent = Number(d.gps[0]).toFixed(4) + ',' + Number(d.gps[1]).toFixed(4);
+    if (continuous) lastCmdEl.textContent = 'logged';
+  } catch (e) { if (continuous) lastCmdEl.textContent = 'log fail'; }
+}
+async function sendMove(dir) {
+  activeDir = dir; lastCmdEl.textContent = dir + ' @ ' + speedInput.value;
+  try {
+    await fetch('/api/control/move', { method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ dir, speed: parseInt(speedInput.value) }) });
   } catch (e) { lastCmdEl.textContent = 'send failed'; }
 }
-
 async function sendStop() {
-  activeDir = null;
-  lastCmdEl.textContent = 'stop';
-  try { await fetch('/api/control/stop', {method: 'POST'}); }
-  catch (e) { lastCmdEl.textContent = 'stop failed'; }
+  activeDir = null; lastCmdEl.textContent = 'stop';
+  try { await fetch('/api/control/stop', { method: 'POST' }); } catch (e) {}
 }
-
-async function captureReading() {
-  lastCmdEl.textContent = 'capture…';
-  try {
-    const r = await fetch('/api/control/capture', { method: 'POST' });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data.error || 'capture failed');
-    lastCmdEl.textContent = 'capture ok';
-  } catch (e) {
-    lastCmdEl.textContent = 'capture failed';
-  }
-}
-
 function wireButton(id) {
-  const el = document.getElementById(id);
-  const dir = el.dataset.dir;
+  const el = document.getElementById(id); const dir = el.dataset.dir;
   const start = (ev) => { ev.preventDefault(); el.classList.add('held'); sendMove(dir); };
-  const end   = (ev) => { ev.preventDefault(); el.classList.remove('held'); if (activeDir === dir) sendStop(); };
+  const end = (ev) => { ev.preventDefault(); el.classList.remove('held'); if (activeDir === dir) sendStop(); };
   el.addEventListener('touchstart', start, {passive:false});
   el.addEventListener('touchend', end, {passive:false});
   el.addEventListener('touchcancel', end, {passive:false});
-  el.addEventListener('mousedown', start);
-  el.addEventListener('mouseup', end);
-  el.addEventListener('mouseleave', end);
+  el.addEventListener('mousedown', start); el.addEventListener('mouseup', end); el.addEventListener('mouseleave', end);
 }
 ['btn-forward','btn-backward','btn-left','btn-right'].forEach(wireButton);
-document.getElementById('btn-stop').addEventListener('click', sendStop);
-document.getElementById('btnCapture').addEventListener('click', captureReading);
-document.getElementById('btnReadings').addEventListener('click', () => setMode('readings'));
-document.getElementById('btnDrive').addEventListener('click', () => setMode('drive'));
-
-setMode('drive');
-
+document.getElementById('btn-stop').onclick = sendStop;
+document.getElementById('btnSample').onclick = async () => { lastCmdEl.textContent = 'sample…'; await sampleOnce(); lastCmdEl.textContent = 'sample ok'; };
+document.getElementById('btnPhoto').onclick = async () => {
+  lastCmdEl.textContent = 'photo…';
+  try {
+    const r = await fetch('/api/control/photo', { method: 'POST' });
+    const d = await r.json();
+    if (!r.ok) throw new Error();
+    lastCmdEl.textContent = d.image_path ? 'photo saved' : 'photo ok';
+  } catch (e) { lastCmdEl.textContent = 'photo failed'; }
+};
 document.addEventListener('visibilitychange', () => { if (document.hidden && activeDir) sendStop(); });
 window.addEventListener('blur', () => { if (activeDir) sendStop(); });
+let liveOn = false;
+function setLiveFeed(on) {
+  liveOn = on;
+  const sw = document.getElementById('liveSwitch');
+  const img = document.getElementById('liveFeedImg');
+  const empty = document.getElementById('liveEmpty');
+  const tag = document.getElementById('liveTag');
+  sw.classList.toggle('on', on);
+  sw.setAttribute('aria-checked', on ? 'true' : 'false');
+  tag.textContent = on ? 'live' : 'off';
+  tag.classList.toggle('on', on);
+  if (on) {
+    img.src = '/video_feed?t=' + Date.now();
+    img.classList.add('show');
+    empty.classList.add('hide');
+  } else {
+    img.src = '';
+    img.classList.remove('show');
+    empty.classList.remove('hide');
+  }
+}
+document.getElementById('liveSwitch').onclick = () => setLiveFeed(!liveOn);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && liveOn) {
+    document.getElementById('liveFeedImg').src = '';
+  } else if (!document.hidden && liveOn) {
+    document.getElementById('liveFeedImg').src = '/video_feed?t=' + Date.now();
+  }
+});
 
 async function pollStatus() {
   try {
-    const r = await fetch('/api/summary');
-    if (r.ok) { statusEl.className = 'ok'; statusText.textContent = 'Connected'; }
-    else throw new Error();
-  } catch (e) { statusEl.className = 'bad'; statusText.textContent = 'Unreachable'; }
+    const r = await fetch('/api/gps/current');
+    if (r.ok) { statusEl.className = 'ok'; statusText.textContent = 'Connected'; return; }
+  } catch (e) {}
+  statusEl.className = 'bad'; statusText.textContent = 'Unreachable';
 }
-pollStatus();
-setInterval(pollStatus, 3000);
+pollStatus(); setInterval(pollStatus, 4000);
 </script>
-
 </body>
 </html>

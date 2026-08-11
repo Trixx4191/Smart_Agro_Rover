@@ -94,6 +94,8 @@ class GPSReader:
 
         self._lat: Optional[float] = None
         self._lon: Optional[float] = None
+        self._sats: int = 0
+        self._quality: int = 0
         self._lock    = threading.Lock()
         self._running = False
         self._thread  = None
@@ -119,6 +121,18 @@ class GPSReader:
     def has_fix(self) -> bool:
         with self._lock:
             return self._lat is not None and self._lon is not None
+
+    def status(self) -> dict:
+        """Extra fix info for the dashboard / mission planner."""
+        with self._lock:
+            return {
+                "lat": self._lat,
+                "lon": self._lon,
+                "has_fix": self._lat is not None and self._lon is not None,
+                "sats": self._sats,
+                "quality": self._quality,
+                "fix_count": self._fix_count,
+            }
 
     def distance_to(self, lat: float, lon: float) -> Optional[float]:
         """Distance in metres from current position to target."""
@@ -195,17 +209,35 @@ class GPSReader:
     def _parse_line(self, line: str):
         if not line.startswith("$"):
             return
+        # strip checksum *hh
+        if "*" in line:
+            line = line.split("*", 1)[0]
         parts = line.split(",")
+        if not parts or len(parts[0]) < 3:
+            return
         sentence = parts[0][1:]   # strip $
 
         result = None
-        if sentence in ("GPRMC", "GNRMC"):
+        if sentence in ("GPRMC", "GNRMC", "GLRMC", "GBRMC"):
             result = _parse_gprmc(parts)
-        elif sentence in ("GPGGA", "GNGGA"):
+        elif sentence in ("GPGGA", "GNGGA", "GLGGA", "GBGGA"):
             result = _parse_gpgga(parts)
+            # quality + sats for UI
+            try:
+                q = int(parts[6]) if len(parts) > 6 and parts[6] != "" else 0
+                s = int(parts[7]) if len(parts) > 7 and parts[7] != "" else 0
+                with self._lock:
+                    self._quality = q
+                    self._sats = s
+            except ValueError:
+                pass
 
         if result:
+            lat, lon = result
+            # reject 0,0 (common cold-start garbage) unless near equator/prime meridian field
+            if abs(lat) < 1e-7 and abs(lon) < 1e-7:
+                return
             with self._lock:
-                self._lat, self._lon = result
+                self._lat, self._lon = lat, lon
                 self._fix_count += 1
             log.debug(f"GPS fix #{self._fix_count}: {self._lat}, {self._lon}")
