@@ -69,8 +69,8 @@ void loop() {
 // Flip to true ONLY after that part is wired, then re-upload.
 // Order to bring up: motors → moisture → US front → DHT or BME.
 #define HAS_MOTORS       true
-#define HAS_US_FRONT     true   // HC-SR04: TRIG=A0  ECHO=A1
-#define HAS_US_REAR      true   // HC-SR04: TRIG=A0  ECHO=A2
+#define HAS_US_FRONT     false   // HC-SR04: TRIG=A0  ECHO=A1
+#define HAS_US_REAR      false   // HC-SR04: TRIG=A0  ECHO=A2
 #define HAS_DHT22        true    // DHT22 data pin A3  (needs DHT library)
 #define HAS_MOISTURE     true    // two capacitive probes: A6 + A7
 #define HAS_BME280       false    // I2C A4/A5 (needs Adafruit BME280)

@@ -2,7 +2,7 @@
 config.py
 ──────────
 Single source of truth for all rover settings.
-Change values here .
+Change values here — nothing else needs editing.
 """
 
 import os
