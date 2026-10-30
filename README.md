@@ -2,6 +2,13 @@
 
 A low-cost autonomous rover for soil monitoring, crop health analysis, and field data collection. Built on Raspberry Pi 4 + Arduino Nano. 
 
+## Field use
+
+The rover has been **field-tested on 15 farms**, providing practical soil and
+crop data. It records soil moisture and temperature, environmental readings,
+GPS positions, and OpenCV color-based crop-stress indicators through its
+local dashboard and CSV/SQLite logs.
+
 ---
 
 ## Project Structure
@@ -65,6 +72,10 @@ python -m pi.mission --simulate
 python -m pi.mission
 ```
 
+Startup puts the rover in standby. Use `/mission` to save waypoints and press
+**Start Mission** when ready; autonomous patrol starts on that operator action.
+Manual drive is available at `/control`.
+
 ### Arduino
 1. Open `arduino/rover_firmware/rover_firmware.ino` in Arduino IDE
 2. Install libraries: `ArduinoJson`, `DallasTemperature`, `Adafruit BME280`
@@ -90,8 +101,10 @@ No internet required.
 
 ## Waypoints
 
-Edit `pi/mission.py` → `build_waypoints()` with your farm GPS coordinates.
-Measure them by walking the corners with a phone GPS app.
+Plan and save the farm's GPS waypoints in the `/mission` dashboard. They are
+stored in `data/waypoints.json` and loaded by `build_waypoints()` in
+`pi/mission.py`. No route is pre-populated at startup. Measure the farm
+coordinates by walking the corners with a phone GPS app.
 
 ---
 
@@ -130,9 +143,9 @@ Capture --> HSV[Convert Image RGB to HSV]
 
 HSV --> Detect[Detect Plant Stress Yellow Brown Leaves]
 
-Detect --> GLI[Calculate Green Leaf Index]
+Detect --> Score[Calculate Yellow to Yellow Plus Green Ratio]
 
-GLI --> Fusion[Combine Sensor Vision Data]
+Score --> Fusion[Combine Sensor Vision Data]
 
 Fusion --> Log[Store Data To SD Card]
 
